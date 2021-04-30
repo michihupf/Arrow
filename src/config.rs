@@ -1,20 +1,26 @@
 use std::io::ErrorKind;
 
-use log::{info, warn, error};
+use log::{error, info, warn};
+use serde::{Deserialize, Serialize};
 use tokio::fs;
 use toml::{from_str, to_string_pretty};
-use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize)]
+/// The configuration of the server
 pub struct Config {
-    pub port: u16,
+    /// The port the server binds to
+    port: u16,
 }
 
 impl Default for Config {
     fn default() -> Self {
-        Self {
-            port: 25565,
-        }
+        Self { port: 25565 }
+    }
+}
+
+impl Config {
+    pub fn port(&self) -> u16 {
+        self.port
     }
 }
 

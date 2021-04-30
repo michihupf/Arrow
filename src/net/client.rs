@@ -1,14 +1,14 @@
 use std::{io::Cursor, sync::Arc};
 
-use log::{info};
+use log::info;
 use serde::{Deserialize, Serialize};
 use tokio::{io::AsyncReadExt, net::TcpStream, sync::Mutex};
 use uuid::Uuid;
 
-use crate::{net::error::NetError, serde::Serializer, server::Server};
-use crate::serde::{Deserializer, read_varint, varint_bytes};
-use crate::serde::{handshake::serverbound::Handshake, login::{serverbound::LoginStart}};
+use crate::serde::{handshake::serverbound::Handshake, login::serverbound::LoginStart};
+use crate::serde::{read_varint, varint_bytes, Deserializer};
 use crate::server::player::Player;
+use crate::{net::error::NetError, serde::Serializer, server::Server};
 
 /// a client
 pub struct Client {
@@ -29,7 +29,7 @@ impl Client {
         match handshake.next_state.0 {
             1 => self.status().await,
             2 => return self.login().await,
-            _ => unreachable!("Invalid next status")
+            _ => unreachable!("Invalid next status"),
         }
 
         Ok(None)
@@ -52,9 +52,15 @@ impl Client {
     }
 
     /// deserialize next packet
-    pub async fn next_packet<'d, P>(&mut self, id: i32) -> Result<P, NetError> where P: Deserialize<'d> {
+    pub async fn next_packet<'d, P>(&mut self, id: i32) -> Result<P, NetError>
+    where
+        P: Deserialize<'d>,
+    {
         let buf = &mut [0; 10];
-        self.stream.peek(buf).await.map_err(|e| NetError::ReadError(format!("{}", e)))?;
+        self.stream
+            .peek(buf)
+            .await
+            .map_err(|e| NetError::ReadError(format!("{}", e)))?;
 
         let reader = &mut Cursor::new(buf);
 
@@ -65,34 +71,47 @@ impl Client {
             unreachable!("got id {} expected id {}", packet_id.0, id)
         }
 
-        self.stream.read_exact(vec![0; len.len()].as_mut_slice()).await.map_err(|e| NetError::ReadError(format!("{}", e)))?;
+        self.stream
+            .read_exact(vec![0; len.len()].as_mut_slice())
+            .await
+            .map_err(|e| NetError::ReadError(format!("{}", e)))?;
 
         let mut buf = vec![0; len.0 as usize];
 
-        self.stream.read_exact(buf.as_mut_slice()).await.map_err(|e| NetError::ReadError(format!("{}", e)))?;
+        self.stream
+            .read_exact(buf.as_mut_slice())
+            .await
+            .map_err(|e| NetError::ReadError(format!("{}", e)))?;
 
         buf = buf[packet_id.len()..].to_vec();
 
-        P::deserialize(&mut Deserializer::new(buf)).map_err(|e| NetError::DeserializeError(format!("{}", e)))
+        P::deserialize(&mut Deserializer::new(buf))
+            .map_err(|e| NetError::DeserializeError(format!("{}", e)))
     }
 
-    pub async fn send_packet<P>(&mut self, id: i32, packet: P) -> Result<(), NetError> where P: Serialize {
-        let mut ser = Serializer {output: vec![] };
-        packet.serialize(&mut ser).map_err(|e| NetError::SerializeError(format!("{}", e)))?;
-      
+    pub async fn send_packet<P>(&mut self, id: i32, packet: P) -> Result<(), NetError>
+    where
+        P: Serialize,
+    {
+        let mut ser = Serializer { output: vec![] };
+        packet
+            .serialize(&mut ser)
+            .map_err(|e| NetError::SerializeError(format!("{}", e)))?;
+
         let mut output = ser.output;
 
         let mut bytes = varint_bytes(id);
         bytes.append(&mut varint_bytes(output.len() as i32));
         bytes.append(&mut output);
 
-        self.stream.try_write(bytes.as_slice()).map_err(|e| NetError::WriteError(format!("{}", e)))?;
+        self.stream
+            .try_write(bytes.as_slice())
+            .map_err(|e| NetError::WriteError(format!("{}", e)))?;
 
         Ok(())
     }
 
     pub async fn play_recv_loop(&mut self, _server: Arc<Mutex<Server>>) {
-        loop { 
-        }
+        loop {}
     }
 }

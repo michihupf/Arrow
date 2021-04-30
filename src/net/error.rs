@@ -8,14 +8,14 @@ pub enum NetError {
 
     /// produced when packet data is invalid
     InvalidPacketDataError(String),
-    
+
     /// produced when failing to read data
     ReadError(String),
     /// produced when failing to send data
     WriteError(String),
 }
 
-impl Error for NetError { }
+impl Error for NetError {}
 
 impl Display for NetError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

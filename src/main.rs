@@ -1,13 +1,15 @@
 //#![deny(missing_docs)]
 
-pub mod world;
-pub mod server;
-pub mod serde;
-pub mod net;
 pub mod config;
+pub mod game;
+pub mod net;
+pub mod serde;
+pub mod server;
+pub mod world;
 
-use std::sync::Arc;
 use net::NetHandler;
+use std::sync::Arc;
+use tokio::spawn;
 use tokio::sync::Mutex;
 
 use config::read_config;
@@ -23,7 +25,10 @@ async fn main() {
     let server = Server::new().await;
 
     let mut net_handler = NetHandler::new(&config, Arc::new(Mutex::new(server))).await;
-    net_handler.recv_loop().await.unwrap();
+    spawn(async move {
+        net_handler.recv_loop().await.unwrap();
+    });
+    game::start_game_loop().await;
 }
 
 fn setup_logger() -> Result<(), fern::InitError> {

@@ -11,7 +11,9 @@ pub struct Deserializer {
 
 impl Deserializer {
     pub fn new(data: Vec<u8>) -> Self {
-        Self { reader: Cursor::new(data) }
+        Self {
+            reader: Cursor::new(data),
+        }
     }
 
     fn read_byte(&mut self) -> Result<u8, Error> {

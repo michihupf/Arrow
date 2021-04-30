@@ -10,9 +10,7 @@ pub struct Server {
 
 impl Server {
     pub async fn new() -> Self {
-        Self {
-            players: vec![]
-        }
+        Self { players: vec![] }
     }
 
     pub fn add_player(&mut self, player: Player) {
