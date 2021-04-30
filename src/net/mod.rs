@@ -13,15 +13,17 @@ use error::NetError;
 pub struct NetHandler {
     listener: TcpListener,
     server: Arc<Mutex<Server>>,
+    config: Arc<Config>,
 }
 
 impl NetHandler {
-    pub async fn new(config: &Config, server: Arc<Mutex<Server>>) -> Self {
+    pub async fn new(config: Arc<Config>, server: Arc<Mutex<Server>>) -> Self {
         Self {
             listener: TcpListener::bind(format!("0.0.0.0:{}", config.port()))
                 .await
                 .unwrap(),
             server,
+            config,
         }
     }
 
@@ -30,13 +32,14 @@ impl NetHandler {
 
         loop {
             let (socket, _) = self.listener.accept().await.unwrap();
-
+            debug!("Client is connecting");
             let server = self.server.clone();
+            let config = self.config.clone();
 
             tokio::spawn(async move {
                 let client = Client::new(socket);
 
-                let handshake = client.handshake().await;
+                let handshake = client.handshake(config).await;
 
                 if let Ok(Some(mut player)) = handshake {
                     player.client_mut().play_recv_loop(server.clone()).await;

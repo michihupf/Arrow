@@ -1,7 +1,7 @@
 use std::io::{Cursor, Read};
 
-use super::error::Error;
 use super::types;
+use super::{error::Error, read_varint};
 
 /// `serde::Deserializer` implementation
 pub struct Deserializer {
@@ -199,11 +199,15 @@ impl<'a, 'd: 'a> serde::Deserializer<'d> for &'a mut Deserializer {
         todo!()
     }
 
-    fn deserialize_byte_buf<V>(self, _: V) -> std::result::Result<V::Value, Self::Error>
+    fn deserialize_byte_buf<V>(self, v: V) -> std::result::Result<V::Value, Self::Error>
     where
         V: serde::de::Visitor<'d>,
     {
-        todo!()
+        let len = read_varint(&mut self.reader);
+        let mut buf = vec![0; len.0 as usize];
+        self.reader.read_exact(buf.as_mut_slice()).unwrap();
+
+        v.visit_byte_buf(buf)
     }
 
     fn deserialize_option<V>(self, _: V) -> std::result::Result<V::Value, Self::Error>
@@ -223,12 +227,12 @@ impl<'a, 'd: 'a> serde::Deserializer<'d> for &'a mut Deserializer {
     fn deserialize_unit_struct<V>(
         self,
         _: &'static str,
-        _: V,
+        v: V,
     ) -> std::result::Result<V::Value, Self::Error>
     where
         V: serde::de::Visitor<'d>,
     {
-        todo!()
+        v.visit_unit()
     }
 
     fn deserialize_newtype_struct<V>(

@@ -1,15 +1,14 @@
 //#![deny(missing_docs)]
 
 pub mod config;
-pub mod game;
 pub mod net;
 pub mod serde;
 pub mod server;
 pub mod world;
 
+use log::{debug, info};
 use net::NetHandler;
 use std::sync::Arc;
-use tokio::spawn;
 use tokio::sync::Mutex;
 
 use config::read_config;
@@ -20,33 +19,52 @@ use server::Server;
 async fn main() {
     setup_logger().unwrap();
 
-    let config = read_config().await;
+    let config = Arc::new(read_config().await);
 
     let server = Server::new().await;
 
-    let mut net_handler = NetHandler::new(&config, Arc::new(Mutex::new(server))).await;
-    spawn(async move {
-        net_handler.recv_loop().await.unwrap();
-    });
-    game::start_game_loop().await;
+    let mut net_handler = NetHandler::new(config, Arc::new(Mutex::new(server))).await;
+
+    net_handler.recv_loop().await.unwrap();
 }
 
 fn setup_logger() -> Result<(), fern::InitError> {
     let color = ColoredLevelConfig::new();
 
     fern::Dispatch::new()
-        .format(move |out, message, record| {
-            out.finish(format_args!(
-                "{}[{}] [{}] {}",
-                chrono::Local::now().format("[%Y-%m-%d %H:%M:%S]"),
-                color.color(record.level()),
-                record.target(),
-                message
-            ))
+        .level(if cfg!(debug_assertions) {
+            log::LevelFilter::Debug
+        } else {
+            log::LevelFilter::Info
         })
-        .level(log::LevelFilter::Debug)
-        .chain(std::io::stdout())
-        .chain(fern::log_file("output.log")?)
+        .chain(
+            fern::Dispatch::new()
+                .format(move |out, message, record| {
+                    out.finish(format_args!(
+                        "{}[{}] [{}] {}",
+                        chrono::Local::now().format("[%Y-%m-%d %H:%M:%S]"),
+                        color.color(record.level()),
+                        record.target(),
+                        message
+                    ))
+                })
+                .chain(std::io::stderr()),
+        )
+        .chain(
+            fern::Dispatch::new()
+                .format(move |out, message, record| {
+                    out.finish(format_args!(
+                        "{}[{}] [{}] {}",
+                        chrono::Local::now().format("[%Y-%m-%d %H:%M:%S]"),
+                        record.level(),
+                        record.target(),
+                        message
+                    ))
+                })
+                .chain(fern::log_file("output.log")?),
+        )
         .apply()?;
+
+    debug!("Done setting up logger");
     Ok(())
 }

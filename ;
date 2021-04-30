@@ -2,7 +2,6 @@ use std::{io::Cursor, sync::Arc};
 
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
-use status::legacy::serverbound::PluginMessage;
 use tokio::{io::AsyncReadExt, net::TcpStream, sync::Mutex};
 use uuid::Uuid;
 
@@ -35,8 +34,8 @@ impl Client {
             .map_err(|e| NetError::ReadError(format!("{}", e)))?;
 
         if byte[0] == 0xfe {
-            self.legacy_ping(config).await?;
-            return Ok(None);
+            self.legacy_ping(config).await;
+            return Ok(None)
         }
 
         let handshake: Handshake = self.next_packet(0).await?;
@@ -72,60 +71,27 @@ impl Client {
 
         let mut out = [0; 10];
 
-        self.stream
-            .read_exact(&mut out)
-            .await
-            .map_err(|e| NetError::ReadError(format!("Failed reading ping packet: {}", e)))?;
+        self.stream.read_exact(&mut out).await.map_err(|e| NetError::ReadError(format!("Failed reading ping packet: {}", e)))?;
 
-        self.stream
-            .try_write(&mut out)
-            .map_err(|e| NetError::WriteError(format!("Failed writing ping packet: {}", e)))?;
+        self.stream.try_write(&mut out).map_err(|e| NetError::WriteError(format!("Failed writing ping packet: {}", e)))?;
 
         Ok(())
     }
 
     async fn legacy_ping(mut self, config: Arc<Config>) -> Result<(), NetError> {
-        let pack_id = self
-            .stream
-            .read_u8()
-            .await
-            .map_err(|e| NetError::ReadError(format!("{}", e)))?;
+        let pack_id = self.stream.read_u8().await.map_err(|e| NetError::ReadError(format!("{}", e)))?;
 
-        if pack_id != 0xfe {
-            unreachable!("Expected 0xfe, got {}", pack_id);
+        if pack_id != 0xfa {
+            unreachable!("Expected 0xfa, got {}", pack_id);
         }
 
         let mut buf = vec![];
 
-        self.stream
-            .read(buf.as_mut_slice())
-            .await
-            .map_err(|e| NetError::ReadError(format!("{}", e)))?;
+        self.stream.read(buf.as_mut_slice()).await.map_err(|e| NetError::ReadError(format!("{}", e)))?;
 
-        let _ = PluginMessage::deserialize(&mut Deserializer::new(buf))
-            .map_err(|e| NetError::DeserializeError(format!("{}", e)))?;
+        let packet = 
 
-        let mut data = vec![
-            0x00, 0xa7, 0x00, 0x31, 0x00, 0x00, 0x00, 0x31, 0x00, 0x32, 0x00, 0x37, 0x00, 0x00,
-            0x00, 0x31, 0x00, 0x2e, 0x00, 0x38, 0x00, 0x2e, 0x00, 0x39, 0x00, 0x00,
-        ];
-
-        data.append(
-            &mut config
-                .description()
-                .text
-                .encode_utf16()
-                .map(|v| v.to_be_bytes())
-                .collect::<Vec<[u8; 2]>>()
-                .concat(),
-        );
-        data.append(&mut vec![0x00, 0x30, 0x00, 0x00, 0x00, 0x34, 0x00, 0x32]);
-
-        self.stream
-            .try_write(data.as_slice())
-            .map_err(|e| NetError::SerializeError(format!("{}", e)))?;
-
-        Ok(())
+        todo!("Implement legacy server list ping");
     }
 
     /// deserialize next packet

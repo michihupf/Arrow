@@ -1,7 +1,7 @@
 pub mod serverbound {
-    use crate::serde::types::Varint;
-
     use serde::Deserialize;
+
+    use crate::serde::types::Varint;
 
     #[derive(Debug, Deserialize)]
     pub struct Handshake {
