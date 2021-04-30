@@ -27,7 +27,11 @@ impl Client {
     }
 
     /// called when a client connects
-    pub async fn handshake(mut self, config: Arc<Config>) -> Result<Option<Player>, NetError> {
+    pub async fn handshake(
+        mut self,
+        config: Arc<Config>,
+        server: Arc<Mutex<Server>>,
+    ) -> Result<Option<Player>, NetError> {
         let byte = &mut [0];
         self.stream
             .peek(byte)
@@ -43,16 +47,27 @@ impl Client {
 
         match handshake.next_state.0 {
             1 => return self.status(config).await.map(|_| None),
-            2 => return self.login().await,
+            2 => return self.login(server).await,
             _ => unreachable!("Invalid next status"),
         }
     }
 
     /// expects that handshake has been handled
-    pub async fn login(mut self) -> Result<Option<Player>, NetError> {
+    pub async fn login(mut self, server: Arc<Mutex<Server>>) -> Result<Option<Player>, NetError> {
         let login_start: LoginStart = self.next_packet(0).await?;
 
         let uuid = Uuid::new_v3(&Uuid::NAMESPACE_OID, login_start.name.as_bytes());
+
+        if server.lock().await.has_uuid(&uuid).await {
+            info!(
+                "Client with address {} tried to login as online player with uuid {}",
+                self.stream
+                    .local_addr()
+                    .map_err(|e| NetError::CantGetAddressError(format!("{}", e)))?,
+                uuid
+            );
+            todo!("Add disconnect packet");
+        }
 
         info!("Player {} with uuid {} logged in", login_start.name, uuid);
 

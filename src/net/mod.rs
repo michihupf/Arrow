@@ -39,7 +39,7 @@ impl NetHandler {
             tokio::spawn(async move {
                 let client = Client::new(socket);
 
-                let handshake = client.handshake(config).await;
+                let handshake = client.handshake(config, server.clone()).await;
 
                 if let Ok(Some(mut player)) = handshake {
                     if let Err(e) = player.client_mut().play_recv_loop(server.clone()).await {

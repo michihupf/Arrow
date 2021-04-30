@@ -13,6 +13,8 @@ pub enum NetError {
     ReadError(String),
     /// produced when failing to send data
     WriteError(String),
+
+    CantGetAddressError(String),
 }
 
 impl Error for NetError {}
@@ -25,6 +27,7 @@ impl Display for NetError {
             Self::InvalidPacketDataError(s) => write!(f, "Invalid Packet Error: {}", s),
             Self::ReadError(s) => write!(f, "Failed Reading: {}", s),
             Self::WriteError(s) => write!(f, "Failed Writing: {}", s),
+            Self::CantGetAddressError(s) => write!(f, "Failed getting address: {}", s),
         }
     }
 }

@@ -3,8 +3,8 @@ pub mod player;
 
 use uuid::Uuid;
 
-use crate::net::error::NetError;
 use self::player::Player;
+use crate::net::error::NetError;
 
 pub struct Server {
     // world_data: Vec<Vec<chunk::Chunk>>,
@@ -20,7 +20,10 @@ impl Server {
         self.players.push(player);
     }
 
-    pub async fn broadcast_packet<P>(&mut self, id: i32, packet: P) -> Result<(), NetError> where P: serde::Serialize {
+    pub async fn broadcast_packet<P>(&mut self, id: i32, packet: P) -> Result<(), NetError>
+    where
+        P: serde::Serialize,
+    {
         let packet = &packet;
 
         for player in self.players.as_mut_slice() {
@@ -30,8 +33,15 @@ impl Server {
         Ok(())
     }
 
-
-    pub async fn broadcast_packet_exclude<P>(&mut self, id: i32, packet: P, exclude: Vec<&Uuid>) -> Result<(), NetError> where P: serde::Serialize {
+    pub async fn broadcast_packet_exclude<P>(
+        &mut self,
+        id: i32,
+        packet: P,
+        exclude: Vec<&Uuid>,
+    ) -> Result<(), NetError>
+    where
+        P: serde::Serialize,
+    {
         let packet = &packet;
 
         for player in self.players.as_mut_slice() {
@@ -41,5 +51,15 @@ impl Server {
         }
 
         Ok(())
+    }
+
+    pub async fn has_uuid(&self, uuid: &Uuid) -> bool {
+        for player in self.players.as_slice() {
+            if player.uuid() == uuid {
+                return true;
+            }
+        }
+
+        false
     }
 }
