@@ -128,6 +128,34 @@ impl Client {
         Ok(())
     }
 
+    pub async fn play_recv_loop(&mut self, _server: Arc<Mutex<Server>>) -> Result<(), NetError> {
+        loop {
+            self.stream
+                .readable()
+                .await
+                .map_err(|e| NetError::ReadError(format!("{}", e)))?;
+
+            match self.next_packet_id().await? {
+                id => unimplemented!("Unimplemented packet with id {}", id),
+            }
+        }
+    }
+
+    async fn next_packet_id(&mut self) -> Result<i32, NetError> {
+        let mut buf = [0; 10];
+        self.stream
+            .peek(&mut buf)
+            .await
+            .map_err(|e| NetError::ReadError(format!("{}", e)))?;
+
+        let reader = &mut Cursor::new(&mut buf);
+
+        let _ = read_varint(reader);
+        let packet_id = read_varint(reader);
+
+        Ok(packet_id.0)
+    }
+
     /// deserialize next packet
     pub async fn next_packet<'d, P>(&mut self, id: i32) -> Result<P, NetError>
     where
@@ -186,10 +214,6 @@ impl Client {
             .map_err(|e| NetError::WriteError(format!("{}", e)))?;
 
         Ok(())
-    }
-
-    pub async fn play_recv_loop(&mut self, _server: Arc<Mutex<Server>>) {
-        loop {}
     }
 }
 

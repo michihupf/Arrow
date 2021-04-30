@@ -42,7 +42,9 @@ impl NetHandler {
                 let handshake = client.handshake(config).await;
 
                 if let Ok(Some(mut player)) = handshake {
-                    player.client_mut().play_recv_loop(server.clone()).await;
+                    if let Err(e) = player.client_mut().play_recv_loop(server.clone()).await {
+                        log::error!("Player loop stopped: {}", e);
+                    }
                     server.lock().await.add_player(player);
                 }
             });
