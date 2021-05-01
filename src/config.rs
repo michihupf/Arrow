@@ -54,10 +54,7 @@ impl Default for Config {
 impl Default for Description {
     fn default() -> Self {
         Self {
-            extra: vec![Extra {
-                color: None,
-                text: "Arrow - A Minecraft Server written in Rust".to_string(),
-            }],
+            extra: vec![],
             text: "Arrow - A Minecraft Server written in Rust".to_string(),
         }
     }
