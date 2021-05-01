@@ -6,7 +6,7 @@ use status::legacy::serverbound::PluginMessage;
 use tokio::{io::AsyncReadExt, net::TcpStream, sync::Mutex};
 use uuid::Uuid;
 
-use crate::serde::{read_varint, status, varint_bytes, Deserializer};
+use crate::serde::{read_varint, status, varint_bytes, Deserializer, Varint};
 use crate::server::player::Player;
 use crate::{
     config::{Config, Description},
@@ -87,10 +87,9 @@ impl Client {
 
         let mut out = [0; 10];
 
-        self.stream
-            .read_exact(&mut out)
-            .await
-            .map_err(|e| NetError::ReadError(format!("Failed reading ping packet: {}", e)))?;
+        if let Err(_) = self.stream.read_exact(&mut out).await {
+            return Ok(());
+        }
 
         self.stream
             .try_write(&mut out)
@@ -150,13 +149,13 @@ impl Client {
                 .await
                 .map_err(|e| NetError::ReadError(format!("{}", e)))?;
 
-            match self.next_packet_id().await? {
-                id => unimplemented!("Unimplemented packet with id {}", id),
+            match self.next_packet_id_len().await?.0 {
+                _ => {},
             }
         }
     }
 
-    async fn next_packet_id(&mut self) -> Result<i32, NetError> {
+    async fn next_packet_id_len(&mut self) -> Result<(i32, i32), NetError> {
         let mut buf = [0; 10];
         self.stream
             .peek(&mut buf)
@@ -165,10 +164,10 @@ impl Client {
 
         let reader = &mut Cursor::new(&mut buf);
 
-        let _ = read_varint(reader);
+        let len = read_varint(reader);
         let packet_id = read_varint(reader);
 
-        Ok(packet_id.0)
+        Ok((packet_id.0, len.0))
     }
 
     /// deserialize next packet
@@ -220,7 +219,7 @@ impl Client {
 
         let mut output = ser.output;
 
-        let mut bytes = varint_bytes(output.len() as i32);
+        let mut bytes = varint_bytes(output.len() as i32 + Varint(output.len() as i32).len() as i32);
         bytes.append(&mut varint_bytes(id));
         bytes.append(&mut output);
 
