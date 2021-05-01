@@ -41,11 +41,15 @@ impl NetHandler {
 
                 let handshake = client.handshake(config, server.clone()).await;
 
-                if let Ok(Some(mut player)) = handshake {
+                if let Ok(Some(player)) = handshake {
+                    let player = Arc::new(Mutex::new(player));
+
+                    server.lock().await.add_player(player.clone());
+
+                    let mut player = player.lock().await;
                     if let Err(e) = player.client_mut().play_recv_loop(server.clone()).await {
                         log::error!("Player loop stopped: {}", e);
                     }
-                    //server.lock().await.add_player(player);
                 } else if let Err(e) = handshake {
                     log::error!("Handshake failed: {}", e);
                 }
