@@ -87,10 +87,9 @@ impl Client {
 
         let mut out = [0; 10];
 
-        self.stream
-            .read_exact(&mut out)
-            .await
-            .map_err(|e| NetError::ReadError(format!("Failed reading ping packet: {}", e)))?;
+        if let Err(_) = self.stream.read_exact(&mut out).await {
+            return Ok(());
+        }
 
         self.stream
             .try_write(&mut out)
