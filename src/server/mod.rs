@@ -1,15 +1,17 @@
 pub mod error;
 pub mod player;
 
+use std::sync::Arc;
+
 use uuid::Uuid;
-use log::{debug};
+use tokio::sync::Mutex;
 
 use self::player::Player;
 use crate::net::error::NetError;
 
 pub struct Server {
     // world_data: Vec<Vec<chunk::Chunk>>,
-    players: Vec<Player>,
+    players: Vec<Arc<Mutex<Player>>>,
 }
 
 impl Server {
@@ -17,7 +19,7 @@ impl Server {
         Self { players: vec![] }
     }
 
-    pub fn add_player(&mut self, player: Player) {
+    pub fn add_player(&mut self, player: Arc<Mutex<Player>>) {
         self.players.push(player);
     }
 
@@ -28,7 +30,7 @@ impl Server {
         let packet = &packet;
 
         for player in self.players.as_mut_slice() {
-            player.client_mut().send_packet(id, packet).await?;
+            player.lock().await.client_mut().send_packet(id, packet).await?;
         }
 
         Ok(())
@@ -46,8 +48,8 @@ impl Server {
         let packet = &packet;
 
         for player in self.players.as_mut_slice() {
-            if !exclude.contains(&player.uuid()) {
-                player.client_mut().send_packet(id, packet).await?;
+            if !exclude.contains(&player.lock().await.uuid()) {
+                player.lock().await.client_mut().send_packet(id, packet).await?;
             }
         }
 
@@ -56,7 +58,7 @@ impl Server {
 
     pub async fn has_uuid(&self, uuid: &Uuid) -> bool {
         for player in self.players.as_slice() {
-            if player.uuid() == uuid {
+            if player.lock().await.uuid() == uuid {
                 return true;
             }
         }
