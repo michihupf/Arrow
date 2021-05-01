@@ -2,6 +2,7 @@ pub mod error;
 pub mod player;
 
 use uuid::Uuid;
+use log::{debug};
 
 use self::player::Player;
 use crate::net::error::NetError;

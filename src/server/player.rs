@@ -2,6 +2,7 @@ use uuid::Uuid;
 
 use crate::net::client::Client;
 
+#[derive(Debug)]
 pub struct Player {
     client: Client,
     uuid: Uuid,

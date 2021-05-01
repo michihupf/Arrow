@@ -3,12 +3,16 @@ use crate::serde::types::Varint;
 use crate::server::Server;
 
 use uuid::Uuid;
-use serde::Serializer;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 pub mod clientbound;
 pub mod serverbound;
 
-pub async fn spawn_entity(server: Server, entity_id: Varint, object_uuid: Uuid, entity_type: Varint, position: (f32, f32, f32), pitch: f32, yaw: f32, data: i32, velocity: (i16, i16, i16)) {
+/// method for spawning an Entity
+pub async fn spawn_entity(server: Arc<Mutex<Server>>, entity_id: Varint, object_uuid: Uuid, entity_type: Varint, position: (f32, f32, f32),
+    pitch: f32, yaw: f32, data: i32, velocity: (i16, i16, i16)) {
+
     let spawn_entity = SpawnEntity {
         entity_id: entity_id,
         object_uuid: object_uuid,
@@ -24,6 +28,9 @@ pub async fn spawn_entity(server: Server, entity_id: Varint, object_uuid: Uuid, 
         vel_z: velocity.2,
     };
 
-    // send the packet to every player
     server.lock().await.broadcast_packet(0x00, spawn_entity);
+}
+
+pub async fn spawn_experience_orb(server: Arc<Mutex<Server>>, entity_id: Varint, position: (f32, f32, f32), count: i16) {
+    todo!("Implement Experience Orb Spawning");
 }

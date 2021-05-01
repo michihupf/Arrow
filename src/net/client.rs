@@ -17,6 +17,7 @@ use crate::{
 };
 use crate::{net::error::NetError, serde::Serializer, server::Server};
 
+#[derive(Debug)]
 /// a client
 pub struct Client {
     /// tcp connection of client
@@ -30,11 +31,7 @@ impl Client {
     }
 
     /// called when a client connects
-    pub async fn handshake(
-        mut self,
-        config: Arc<Config>,
-        server: Arc<Mutex<Server>>,
-    ) -> Result<Option<Player>, NetError> {
+    pub async fn handshake(mut self, config: Arc<Config>, server: Arc<Mutex<Server>>) -> Result<Option<Player>, NetError> {
         let byte = &mut [0];
         self.stream
             .peek(byte)
@@ -72,16 +69,17 @@ impl Client {
             todo!("Add disconnect packet");
         }
 
+        info!("Player {} with uuid {} logged in", login_start.name, uuid);
+
         self.send_packet(
             0x02,
             LoginSuccess {
                 uuid: &uuid,
-                username: login_start.name.clone(),
+                username: String::from("NoRysq"),
             },
-        )
-        .await?;
+        ).await?;
 
-        info!("Player {} with uuid {} logged in", login_start.name, uuid);
+        debug!("Sent LoginSuccess packet");
 
         Ok(Some(Player::new(self, uuid)))
     }
@@ -163,8 +161,8 @@ impl Client {
                 .map_err(|e| NetError::ReadError(format!("{}", e)))?;
 
             match self.next_packet_id().await? {
-                _ => {}
 //                id => debug!("Unimplemented packet with id {}", id),
+                _ => return Ok(())
             }
         }
     }
@@ -233,7 +231,7 @@ impl Client {
 
         let mut output = ser.output;
 
-        let mut bytes = varint_bytes(output.len() as i32);
+        let mut bytes = varint_bytes((output.len()+1) as i32);
         bytes.append(&mut varint_bytes(id));
         bytes.append(&mut output);
 
