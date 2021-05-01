@@ -194,6 +194,10 @@ impl<'a> serde::Serializer for &'a mut Serializer {
         self.output.append(&mut varint_bytes(variant_index as i32));
         Ok(self)
     }
+
+    fn is_human_readable(&self) -> bool {
+        false
+    }
 }
 
 pub struct SerializeSeq;

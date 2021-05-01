@@ -10,7 +10,10 @@ use crate::serde::{read_varint, status, varint_bytes, Deserializer};
 use crate::server::player::Player;
 use crate::{
     config::{Config, Description},
-    serde::{handshake::serverbound::Handshake, login::serverbound::LoginStart},
+    serde::{
+        handshake::serverbound::Handshake,
+        login::{clientbound::LoginSuccess, serverbound::LoginStart},
+    },
 };
 use crate::{net::error::NetError, serde::Serializer, server::Server};
 
@@ -68,6 +71,15 @@ impl Client {
             );
             todo!("Add disconnect packet");
         }
+
+        self.send_packet(
+            0x02,
+            LoginSuccess {
+                uuid: &uuid,
+                username: login_start.name.clone(),
+            },
+        )
+        .await?;
 
         info!("Player {} with uuid {} logged in", login_start.name, uuid);
 
@@ -151,7 +163,8 @@ impl Client {
                 .map_err(|e| NetError::ReadError(format!("{}", e)))?;
 
             match self.next_packet_id().await? {
-                id => unimplemented!("Unimplemented packet with id {}", id),
+                _ => {}
+//                id => debug!("Unimplemented packet with id {}", id),
             }
         }
     }

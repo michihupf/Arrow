@@ -11,8 +11,8 @@ pub mod clientbound {
     use serde::Serialize;
 
     #[derive(Debug, Serialize)]
-    pub struct LoginSuccess {
-        pub uuid: String,
+    pub struct LoginSuccess<'a> {
+        pub uuid: &'a uuid::Uuid,
         pub username: String,
     }
 }

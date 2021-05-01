@@ -46,6 +46,8 @@ impl NetHandler {
                         log::error!("Player loop stopped: {}", e);
                     }
                     server.lock().await.add_player(player);
+                } else if let Err(e) = handshake {
+                    log::error!("Handshake failed: {}", e);
                 }
             });
         }
