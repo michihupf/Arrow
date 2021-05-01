@@ -75,7 +75,7 @@ impl Client {
             0x02,
             LoginSuccess {
                 uuid: &uuid,
-                username: String::from("NoRysq"),
+                username: login_start.name.clone(),
             },
         ).await?;
 
