@@ -10,10 +10,14 @@ use crate::serde::{read_varint, status, varint_bytes, Deserializer, Varint};
 use crate::server::player::Player;
 use crate::{
     config::{Config, Description},
-    serde::{handshake::serverbound::Handshake, login::serverbound::LoginStart},
+    serde::{
+        handshake::serverbound::Handshake,
+        login::{clientbound::LoginSuccess, serverbound::LoginStart},
+    },
 };
 use crate::{net::error::NetError, serde::Serializer, server::Server};
 
+#[derive(Debug)]
 /// a client
 pub struct Client {
     /// tcp connection of client
@@ -27,11 +31,7 @@ impl Client {
     }
 
     /// called when a client connects
-    pub async fn handshake(
-        mut self,
-        config: Arc<Config>,
-        server: Arc<Mutex<Server>>,
-    ) -> Result<Option<Player>, NetError> {
+    pub async fn handshake(mut self, config: Arc<Config>, server: Arc<Mutex<Server>>) -> Result<Option<Player>, NetError> {
         let byte = &mut [0];
         self.stream
             .peek(byte)
@@ -70,6 +70,16 @@ impl Client {
         }
 
         info!("Player {} with uuid {} logged in", login_start.name, uuid);
+
+        self.send_packet(
+            0x02,
+            LoginSuccess {
+                uuid: &uuid,
+                username: login_start.name.clone(),
+            },
+        ).await?;
+
+        debug!("Sent LoginSuccess packet");
 
         Ok(Some(Player::new(self, uuid)))
     }
