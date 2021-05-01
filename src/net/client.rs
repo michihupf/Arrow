@@ -31,7 +31,11 @@ impl Client {
     }
 
     /// called when a client connects
-    pub async fn handshake(mut self, config: Arc<Config>, server: Arc<Mutex<Server>>) -> Result<Option<Player>, NetError> {
+    pub async fn handshake(
+        mut self,
+        config: Arc<Config>,
+        server: Arc<Mutex<Server>>,
+    ) -> Result<Option<Player>, NetError> {
         let byte = &mut [0];
         self.stream
             .peek(byte)
@@ -77,7 +81,8 @@ impl Client {
                 uuid: &uuid,
                 username: login_start.name.clone(),
             },
-        ).await?;
+        )
+        .await?;
 
         debug!("Sent LoginSuccess packet");
 
@@ -160,7 +165,7 @@ impl Client {
                 .map_err(|e| NetError::ReadError(format!("{}", e)))?;
 
             match self.next_packet_id_len().await?.0 {
-                _ => {},
+                _ => {}
             }
         }
     }
@@ -229,7 +234,8 @@ impl Client {
 
         let mut output = ser.output;
 
-        let mut bytes = varint_bytes(output.len() as i32 + Varint(output.len() as i32).len() as i32);
+        let mut bytes =
+            varint_bytes(output.len() as i32 + Varint(output.len() as i32).len() as i32);
         bytes.append(&mut varint_bytes(id));
         bytes.append(&mut output);
 

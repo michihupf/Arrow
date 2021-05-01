@@ -1,6 +1,6 @@
-use uuid::Uuid;
-use serde::Serialize;
 use crate::serde::types::Varint;
+use serde::Serialize;
+use uuid::Uuid;
 
 #[derive(Serialize)]
 pub struct SpawnEntity {

@@ -3,8 +3,8 @@ pub mod player;
 
 use std::sync::Arc;
 
-use uuid::Uuid;
 use tokio::sync::Mutex;
+use uuid::Uuid;
 
 use self::player::Player;
 use crate::net::error::NetError;
@@ -30,7 +30,12 @@ impl Server {
         let packet = &packet;
 
         for player in self.players.as_mut_slice() {
-            player.lock().await.client_mut().send_packet(id, packet).await?;
+            player
+                .lock()
+                .await
+                .client_mut()
+                .send_packet(id, packet)
+                .await?;
         }
 
         Ok(())
@@ -49,7 +54,12 @@ impl Server {
 
         for player in self.players.as_mut_slice() {
             if !exclude.contains(&player.lock().await.uuid()) {
-                player.lock().await.client_mut().send_packet(id, packet).await?;
+                player
+                    .lock()
+                    .await
+                    .client_mut()
+                    .send_packet(id, packet)
+                    .await?;
             }
         }
 

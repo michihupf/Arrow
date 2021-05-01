@@ -1,18 +1,26 @@
-use crate::{net::error::NetError, serde::packets::play::clientbound::SpawnEntity};
 use crate::serde::types::Varint;
 use crate::server::Server;
+use crate::{net::error::NetError, serde::packets::play::clientbound::SpawnEntity};
 
-use uuid::Uuid;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use uuid::Uuid;
 
 pub mod clientbound;
 pub mod serverbound;
 
 /// method for spawning an Entity
-pub async fn spawn_entity(server: Arc<Mutex<Server>>, entity_id: Varint, object_uuid: Uuid, entity_type: Varint, position: (f32, f32, f32),
-    pitch: f32, yaw: f32, data: i32, velocity: (i16, i16, i16)) -> Result<(), NetError> {
-
+pub async fn spawn_entity(
+    server: Arc<Mutex<Server>>,
+    entity_id: Varint,
+    object_uuid: Uuid,
+    entity_type: Varint,
+    position: (f32, f32, f32),
+    pitch: f32,
+    yaw: f32,
+    data: i32,
+    velocity: (i16, i16, i16),
+) -> Result<(), NetError> {
     let spawn_entity = SpawnEntity {
         entity_id,
         object_uuid,
@@ -28,9 +36,18 @@ pub async fn spawn_entity(server: Arc<Mutex<Server>>, entity_id: Varint, object_
         vel_z: velocity.2,
     };
 
-    server.lock().await.broadcast_packet(0x00, spawn_entity).await
+    server
+        .lock()
+        .await
+        .broadcast_packet(0x00, spawn_entity)
+        .await
 }
 
-pub async fn spawn_experience_orb(server: Arc<Mutex<Server>>, entity_id: Varint, position: (f32, f32, f32), count: i16) {
+pub async fn spawn_experience_orb(
+    server: Arc<Mutex<Server>>,
+    entity_id: Varint,
+    position: (f32, f32, f32),
+    count: i16,
+) {
     todo!("Implement Experience Orb Spawning");
 }
