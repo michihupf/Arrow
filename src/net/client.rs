@@ -149,13 +149,13 @@ impl Client {
                 .await
                 .map_err(|e| NetError::ReadError(format!("{}", e)))?;
 
-            match self.next_packet_id().await? {
-                id => unimplemented!("Unimplemented packet with id {}", id),
+            match self.next_packet_id_len().await?.0 {
+                _ => {},
             }
         }
     }
 
-    async fn next_packet_id(&mut self) -> Result<i32, NetError> {
+    async fn next_packet_id_len(&mut self) -> Result<(i32, i32), NetError> {
         let mut buf = [0; 10];
         self.stream
             .peek(&mut buf)
@@ -164,10 +164,10 @@ impl Client {
 
         let reader = &mut Cursor::new(&mut buf);
 
-        let _ = read_varint(reader);
+        let len = read_varint(reader);
         let packet_id = read_varint(reader);
 
-        Ok(packet_id.0)
+        Ok((packet_id.0, len.0))
     }
 
     /// deserialize next packet
