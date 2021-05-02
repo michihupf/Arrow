@@ -157,15 +157,33 @@ impl Client {
         Ok(())
     }
 
-    pub async fn play_recv_loop(&mut self, _server: Arc<Mutex<Server>>) -> Result<(), NetError> {
+    pub async fn play_recv_loop(
+        &mut self,
+        _server: Arc<Mutex<Server>>,
+        player: Arc<Mutex<Player>>,
+    ) -> Result<(), NetError> {
         loop {
             self.stream
                 .readable()
                 .await
                 .map_err(|e| NetError::ReadError(format!("{}", e)))?;
 
-            match self.next_packet_id_len().await?.0 {
-                _ => {}
+            let next_packet_id_len = self.next_packet_id_len().await?;
+
+            match next_packet_id_len.0 {
+                0x05 => player.lock().await.set_client_settings(self.next_packet(0x05).await?),
+                _ => {
+                    let mut buf = vec![
+                        0;
+                        next_packet_id_len.1 as usize
+                            + Varint(next_packet_id_len.1).len() as usize
+                    ];
+
+                    self.stream
+                        .read_exact(buf.as_mut_slice())
+                        .await
+                        .map_err(|e| NetError::ReadError(format!("{}", e)))?;
+                }
             }
         }
     }
