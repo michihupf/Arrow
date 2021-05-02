@@ -3,8 +3,9 @@ use crate::server::Server;
 use crate::net::client::Client;
 use crate::net::error::NetError;
 use crate::serde::packets::play::clientbound::{
-    SpawnEntity, PluginMessage, ServerDifficulty, PlayerAbilities
+    SpawnEntity, PluginMessage, ServerDifficulty, Difficulty, DeclareRecipes
 };
+use crate::minecraft::recipe::Recipe;
 
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -13,7 +14,7 @@ use uuid::Uuid;
 pub mod clientbound;
 pub mod serverbound;
 
-
+/// * send plugin message to a specific `client` via a specific `plugin_channel`
 pub async fn send_plugin_message_to_client(
     mut client: Client,
     channel: String,
@@ -29,6 +30,7 @@ pub async fn send_plugin_message_to_client(
         .await
 }
 
+/// * broadcast plugin message to `all clients` on the server via a specific `plugin channel`
 pub async fn send_plugin_message_to_all_clients(
     server: Arc<Mutex<Server>>,
     channel: String,
@@ -46,9 +48,10 @@ pub async fn send_plugin_message_to_all_clients(
         .await
 }
 
+/// * set server difficulty
 pub async fn set_server_difficulty(
     server: Arc<Mutex<Server>>,
-    difficulty: u8,
+    difficulty: Difficulty,
     difficulty_locked: bool
 ) -> Result<(), NetError> {
     let difficulty_packet = ServerDifficulty {
@@ -63,7 +66,7 @@ pub async fn set_server_difficulty(
         .await
 }
 
-/// method for spawning an Entity
+/// * method for spawning an Entity
 pub async fn spawn_entity(
     server: Arc<Mutex<Server>>,
     entity_id: Varint,
@@ -97,11 +100,28 @@ pub async fn spawn_entity(
         .await
 }
 
+pub async fn declare_recipes(
+    mut client: Client,
+    num_recipes: Varint,
+    recipes: Vec<Recipe>
+) -> Result<(), NetError> {
+    let declare_recipes = DeclareRecipes {
+        num_recipes,
+        recipes
+    };
+
+    client
+        .send_packet(0x5A, declare_recipes)
+        .await
+}
+
+#[allow(unused_variables)]
 pub async fn spawn_experience_orb(
     server: Arc<Mutex<Server>>,
     entity_id: Varint,
     position: (f32, f32, f32),
     count: i16,
 ) {
+    // TODO: IMPLEMENT EXPERIENCE ORB SPAWING
     todo!("Implement Experience Orb Spawning");
 }

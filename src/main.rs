@@ -5,8 +5,9 @@ pub mod net;
 pub mod serde;
 pub mod server;
 pub mod world;
+pub mod minecraft;
 
-use log::{debug, info};
+use log::debug;
 use net::NetHandler;
 use std::sync::Arc;
 use tokio::sync::Mutex;

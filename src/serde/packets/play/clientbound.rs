@@ -1,4 +1,5 @@
 use crate::serde::types::Varint;
+use crate::minecraft::recipe::Recipe;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -10,8 +11,16 @@ pub struct PluginMessage {
 
 #[derive(Serialize)]
 pub struct ServerDifficulty {
-    pub difficulty: u8,
+    pub difficulty: Difficulty,
     pub difficulty_locked: bool,
+}
+
+#[derive(Serialize)]
+pub enum Difficulty {
+    PEACEFUL = 0,
+    EASY = 1,
+    NORMAL = 2,
+    HARD = 3,
 }
 
 #[derive(Serialize, Copy, Clone)]
@@ -42,6 +51,12 @@ impl PlayerAbilities {
 #[derive(Serialize)]
 pub struct HeldItemChange {
     pub slot: i8,
+}
+
+#[derive(Serialize)]
+pub struct DeclareRecipes {
+    pub num_recipes: Varint,
+    pub recipes: Vec<Recipe>,
 }
 
 #[derive(Serialize)]
