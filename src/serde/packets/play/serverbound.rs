@@ -22,3 +22,8 @@ pub enum MainHand {
     Left = 0,
     Right = 1,
 }
+
+pub struct PluginMessage {
+    pub channel: String,
+    pub data: Vec<i8>,
+}

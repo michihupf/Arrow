@@ -1,6 +1,10 @@
 use crate::serde::types::Varint;
 use crate::server::Server;
-use crate::{net::error::NetError, serde::packets::play::clientbound::SpawnEntity};
+use crate::net::client::Client;
+use crate::net::error::NetError;
+use crate::serde::packets::play::clientbound::{
+    SpawnEntity, PluginMessage, ServerDifficulty, PlayerAbilities
+};
 
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -8,6 +12,56 @@ use uuid::Uuid;
 
 pub mod clientbound;
 pub mod serverbound;
+
+
+pub async fn send_plugin_message_to_client(
+    mut client: Client,
+    channel: String,
+    data: Vec<i8>
+) -> Result<(), NetError> {
+    let plugin_message = PluginMessage {
+        channel,
+        data
+    };
+
+    client
+        .send_packet(0x17, plugin_message)
+        .await
+}
+
+pub async fn send_plugin_message_to_all_clients(
+    server: Arc<Mutex<Server>>,
+    channel: String,
+    data: Vec<i8>
+) -> Result<(), NetError> {
+    let plugin_message = PluginMessage {
+        channel,
+        data
+    };
+
+    server
+        .lock()
+        .await
+        .broadcast_packet(0x17, plugin_message)
+        .await
+}
+
+pub async fn set_server_difficulty(
+    server: Arc<Mutex<Server>>,
+    difficulty: u8,
+    difficulty_locked: bool
+) -> Result<(), NetError> {
+    let difficulty_packet = ServerDifficulty {
+        difficulty,
+        difficulty_locked
+    };
+
+    server
+        .lock()
+        .await
+        .broadcast_packet(0x0D, difficulty_packet)
+        .await
+}
 
 /// method for spawning an Entity
 pub async fn spawn_entity(
