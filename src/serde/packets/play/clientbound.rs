@@ -1,6 +1,63 @@
 use crate::serde::types::Varint;
+use crate::minecraft::recipe::Recipe;
 use serde::Serialize;
 use uuid::Uuid;
+
+#[derive(Serialize)]
+pub struct PluginMessage {
+    pub channel: String,
+    pub data: Vec<i8>,
+}
+
+#[derive(Serialize)]
+pub struct ServerDifficulty {
+    pub difficulty: Difficulty,
+    pub difficulty_locked: bool,
+}
+
+#[derive(Serialize)]
+pub enum Difficulty {
+    PEACEFUL = 0,
+    EASY = 1,
+    NORMAL = 2,
+    HARD = 3,
+}
+
+#[derive(Serialize, Copy, Clone)]
+pub struct PlayerAbilities {
+    pub flags: i8,
+    pub flying_speed: f32,
+    pub fov_modifier: f32,
+}
+
+impl Default for PlayerAbilities {
+    fn default() -> PlayerAbilities {
+        Self { flags: 0, flying_speed: 0.05, fov_modifier: 0.1 }
+    }
+}
+
+impl PlayerAbilities {
+    pub fn flag(invurnable: bool, flying: bool, allow_flying: bool, creative_mode: bool) -> i8 {
+        let mut flag: i8 = 0x00;
+        flag |= invurnable as i8;
+        flag |= (flying as i8) << 1;
+        flag |= (allow_flying as i8) << 2;
+        flag |= (creative_mode as i8) << 3;
+
+        flag
+    }
+}
+
+#[derive(Serialize)]
+pub struct HeldItemChange {
+    pub slot: i8,
+}
+
+#[derive(Serialize)]
+pub struct DeclareRecipes {
+    pub num_recipes: Varint,
+    pub recipes: Vec<Recipe>,
+}
 
 #[derive(Serialize)]
 pub struct SpawnEntity {
