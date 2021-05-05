@@ -121,7 +121,6 @@ pub async fn declare_recipes(
         .await
 }
 
-#[allow(unused_variables)]
 pub async fn spawn_experience_orb(
     server: Arc<Mutex<Server>>,
     entity_id: Varint,
