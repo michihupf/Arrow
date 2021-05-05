@@ -1,5 +1,5 @@
 use crate::serde::types::Varint;
-use crate::minecraft::recipe::Recipe;
+use crate::minecraft::{recipe::Recipe, /*entity_statuses as EntityStatuses*/};
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -51,6 +51,12 @@ impl PlayerAbilities {
 #[derive(Serialize)]
 pub struct HeldItemChange {
     pub slot: i8,
+}
+
+#[derive(Serialize)]
+pub struct EntityStatus {
+    pub entity_id: i32,
+    pub entity_status: i8,
 }
 
 #[derive(Serialize)]
