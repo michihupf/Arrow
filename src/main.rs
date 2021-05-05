@@ -1,10 +1,13 @@
-//#![deny(missing_docs)]
+#[macro_use]
+extern crate derive_new;
 
 pub mod config;
 pub mod net;
 pub mod serde;
 pub mod server;
 pub mod world;
+#[macro_use]
+pub mod utils;
 
 use log::{debug, info};
 use net::NetHandler;

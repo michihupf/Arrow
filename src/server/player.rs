@@ -10,7 +10,11 @@ pub struct Player {
 
 impl Player {
     pub fn new(client: Client, uuid: Uuid) -> Self {
-        Self { client, uuid, client_settings: None }
+        Self {
+            client,
+            uuid,
+            client_settings: None,
+        }
     }
 
     pub fn uuid(&self) -> &Uuid {
@@ -22,7 +26,7 @@ impl Player {
     }
 
     pub fn client_settings(&self) -> &Option<ClientSettings> {
-        &self.client_settings        
+        &self.client_settings
     }
 
     pub fn set_client_settings(&mut self, client_settings: ClientSettings) {

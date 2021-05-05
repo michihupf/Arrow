@@ -1,3 +1,5 @@
+use log::info;
+
 use super::error::Error;
 use super::types::varint_bytes;
 
@@ -144,8 +146,7 @@ impl<'a> serde::Serializer for &'a mut Serializer {
     }
 
     fn serialize_seq(self, len: Option<usize>) -> Result<Self::SerializeSeq, Self::Error> {
-        self.output
-            .append(&mut (len.unwrap() as i32).to_be_bytes().to_vec());
+        self.output.append(&mut varint_bytes(len.unwrap() as i32));
         Ok(self)
     }
 
