@@ -22,3 +22,5 @@ toml = "0.5"
 uuid = { version = "0.8", features = ["v3", "serde"] }
 
 hematite-nbt = "0.5.1"
+
+derive-new = "0.5"
