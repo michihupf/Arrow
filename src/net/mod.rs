@@ -3,7 +3,7 @@ pub mod error;
 
 use std::sync::Arc;
 
-use log::{debug, info};
+use log::debug;
 use tokio::{net::TcpListener, sync::Mutex};
 
 use crate::{config::Config, server::Server};
