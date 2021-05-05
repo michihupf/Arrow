@@ -6,7 +6,7 @@ use status::legacy::serverbound::PluginMessage;
 use tokio::{io::AsyncReadExt, net::TcpStream, sync::Mutex};
 use uuid::Uuid;
 
-use crate::serde::{read_varint, status, varint_bytes, Deserializer, Varint};
+use crate::serde::{Deserializer, Varint, play::join_game, read_varint, status, varint_bytes};
 use crate::server::player::Player;
 use crate::{
     config::{Config, Description},
@@ -162,6 +162,8 @@ impl Client {
         _server: Arc<Mutex<Server>>,
         player: Arc<Mutex<Player>>,
     ) -> Result<(), NetError> {
+        join_game(self, 0).await?;
+
         loop {
             self.stream
                 .readable()
@@ -170,9 +172,15 @@ impl Client {
 
             let next_packet_id_len = self.next_packet_id_len().await?;
 
+            debug!("id: {}", next_packet_id_len.0);
             match next_packet_id_len.0 {
-                0x05 => player.lock().await.set_client_settings(self.next_packet(0x05).await?),
+                0x05 => player
+                    .lock()
+                    .await
+                    .set_client_settings(self.next_packet(0x05).await?),
                 _ => {
+                    debug!("Got unknown packet id {}", next_packet_id_len.0);
+
                     let mut buf = vec![
                         0;
                         next_packet_id_len.1 as usize
@@ -256,6 +264,8 @@ impl Client {
             varint_bytes(output.len() as i32 + Varint(output.len() as i32).len() as i32);
         bytes.append(&mut varint_bytes(id));
         bytes.append(&mut output);
+
+        debug!("{}: {:?}", id, bytes);
 
         self.stream
             .try_write(bytes.as_slice())

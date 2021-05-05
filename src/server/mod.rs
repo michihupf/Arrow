@@ -1,22 +1,29 @@
+pub mod entity;
 pub mod error;
 pub mod player;
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
+use self::entity::Entity;
 use self::player::Player;
 use crate::net::error::NetError;
 
 pub struct Server {
     // world_data: Vec<Vec<chunk::Chunk>>,
     players: Vec<Arc<Mutex<Player>>>,
+    entities: HashMap<i32, Entity>,
 }
 
 impl Server {
     pub async fn new() -> Self {
-        Self { players: vec![] }
+        Self {
+            players: vec![],
+            entities: HashMap::new(),
+        }
     }
 
     pub fn add_player(&mut self, player: Arc<Mutex<Player>>) {

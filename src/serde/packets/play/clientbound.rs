@@ -1,6 +1,6 @@
 use crate::serde::types::Varint;
+use serde::{Serialize, Serializer};
 use crate::minecraft::{recipe::Recipe, /*entity_statuses as EntityStatuses*/};
-use serde::Serialize;
 use uuid::Uuid;
 
 #[derive(Serialize)]
@@ -104,4 +104,39 @@ pub struct SpawnLivingEntity {
     pub vel_x: f32,
     pub vel_y: f32,
     pub vel_z: f32,
+}
+
+#[derive(Serialize)]
+pub struct JoinGame<'a> {
+    pub entity_id: i32,
+    pub hardcore: bool,
+    pub gamemode: u8,
+    pub prev_gamemode: i8,
+    pub world_names: Vec<String>,
+    #[serde(serialize_with = "serialize_bytes")]
+    pub dimension_codec: &'a [u8],
+    #[serde(serialize_with = "serialize_bytes")]
+    pub dimension: &'a [u8],
+    pub world_name: String,
+    pub hashed_seed: u64,
+    pub max_players: Varint,
+    pub view_distance: Varint,
+    pub reduced_debug_info: bool,
+    pub enable_respawn_screen: bool,
+    pub debug: bool,
+    pub flat: bool,
+}
+
+pub fn serialize_bytes<S>(bytes: &[u8], s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    s.serialize_bytes(bytes)
+}
+
+pub enum Gamemode {
+    Survival = 0,
+    Creative = 1,
+    Adventure = 2,
+    Spectator = 3,
 }
