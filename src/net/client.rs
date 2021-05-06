@@ -162,7 +162,8 @@ impl Client {
         _server: Arc<Mutex<Server>>,
         player: Arc<Mutex<Player>>,
     ) -> Result<(), NetError> {
-        join_game(self, 0).await?;
+        join_game(self, 1).await?;
+        debug!("Sent JoinGame Packet");
 
         loop {
             self.stream
@@ -253,6 +254,7 @@ impl Client {
     where
         P: Serialize,
     {
+        debug!("I got called");
         let mut ser = Serializer { output: vec![] };
         packet
             .serialize(&mut ser)

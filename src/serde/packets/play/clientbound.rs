@@ -107,16 +107,16 @@ pub struct SpawnLivingEntity {
 }
 
 #[derive(Serialize)]
-pub struct JoinGame<'a> {
+pub struct JoinGame {
     pub entity_id: i32,
     pub hardcore: bool,
     pub gamemode: u8,
     pub prev_gamemode: i8,
     pub world_names: Vec<String>,
     #[serde(serialize_with = "serialize_bytes")]
-    pub dimension_codec: &'a [u8],
+    pub dimension_codec: Vec<u8>,
     #[serde(serialize_with = "serialize_bytes")]
-    pub dimension: &'a [u8],
+    pub dimension: Vec<u8>,
     pub world_name: String,
     pub hashed_seed: u64,
     pub max_players: Varint,

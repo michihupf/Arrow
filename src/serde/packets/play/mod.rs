@@ -1,7 +1,6 @@
 use serde::Serialize;
 
 use crate::server::Server;
-use crate::world::dimension::*;
 use crate::{net::client::Client, serde::types::Varint};
 use crate::net::error::NetError;
 use crate::serde::packets::play::clientbound::{
@@ -9,6 +8,7 @@ use crate::serde::packets::play::clientbound::{
 };
 use crate::minecraft::recipe::Recipe;
 
+use log::debug;
 use nbt::{Blob, Value};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -132,89 +132,61 @@ pub async fn spawn_experience_orb(
 }
 
 pub async fn join_game(client: &mut Client, entity_id: i32) -> Result<(), NetError> {
-    let mut dimensions = HashMap::new();
-    let mut biomes = HashMap::new();
+    let mut dimension_codec = Blob::new();
 
-    dimensions.insert(
-        "minecraft:overworld".to_string(),
-        DimensionType::new(
-            Value::Byte(0),
-            Value::Byte(1),
-            Value::Float(0f32),
-            None,
-            Value::String("minecraft:infiniburn_overworld".to_string()),
-            Value::Byte(0),
-            Value::Byte(1),
-            Value::Byte(1),
-            Value::String("minecraft:overworld".to_string()),
-            Value::Byte(1),
-            Value::Int(256),
-            Value::Double(1.0),
-            Value::Byte(0),
-            Value::Byte(0),
-        ),
-    );
+    let mut dimension_type = HashMap::new();
+    let mut dimension_type_registry = HashMap::new();
+    let mut element = HashMap::new();
 
-    biomes.insert(
-        "minecraft:plains".to_string(),
-        BiomeProperties::new(
-            Value::String("rain".to_string()),
-            Value::Float(0.125),
-            Value::Float(0.8),
-            Value::Float(0.05),
-            Value::Float(0.4),
-            Value::String("plains".to_string()),
-            None,
-            BiomeEffects::new(
-                Value::Int(7907327),
-                Value::Int(329011),
-                Value::Int(12638463),
-                Value::Int(4159204),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-            ),
-            None,
-        ),
-    );
+    element.insert(String::from("piglin_safe"), Value::Byte(0));
+    element.insert(String::from("natural"), Value::Byte(1));
+    element.insert(String::from("ambient_light"), Value::Float(0f32));
+    element.insert(String::from("infiniburn"), Value::String(String::from("minecraft:infiniburn_overworld")));
+    element.insert(String::from("respawn_anchor_works"), Value::Byte(0));
+    element.insert(String::from("has_skylight"), Value::Byte(1));
+    element.insert(String::from("bed_works"), Value::Byte(1));
+    element.insert(String::from("effects"), Value::String(String::from("minecraft:overworld")));
+    element.insert(String::from("has_raids"), Value::Byte(1));
+    element.insert(String::from("logical_height"), Value::Int(256));
+    element.insert(String::from("coordinate_scale"), Value::Float(1f32));
+    element.insert(String::from("ultrawarm"), Value::Byte(0));
+    element.insert(String::from("has_ceiling"), Value::Byte(0));
 
-    let dimension_codec = DimensionCodec::new(dimensions, biomes);
+    dimension_type_registry.insert(String::from("name"), Value::String(String::from("minecraft:overworld")));
+    dimension_type_registry.insert(String::from("id"), Value::Int(0));
+    dimension_type_registry.insert(String::from("element"), Value::Compound(element.clone()));
 
-    let dimension = 
-        DimensionType::new(
-            Value::Byte(0),
-            Value::Byte(1),
-            Value::Float(0f32),
-            None,
-            Value::String("minecraft:infiniburn_overworld".to_string()),
-            Value::Byte(0),
-            Value::Byte(1),
-            Value::Byte(1),
-            Value::String("minecraft:overworld".to_string()),
-            Value::Byte(1),
-            Value::Int(256),
-            Value::Double(1.0),
-            Value::Byte(0),
-            Value::Byte(0),
-        );
+    let value = vec![Value::Compound(dimension_type_registry)];
 
+    dimension_type.insert(String::from("type"), Value::String(String::from("minecraft:dimension_type")));
+    dimension_type.insert(String::from("value"), Value::List(value));
 
-    let mut dimension_codec_bytes = vec![];
-    let mut dimension_bytes = vec![];
-   
-    let mut blob = Blob::new();
-    blob.insert("minecraft:dimension_type", dimension_codec.dimension_type.clone()).unwrap();
-    blob.insert("minecraft:worldgen/biome", dimension_codec.worldgen_biome.clone()).unwrap();
+    dimension_codec.insert("minecraft:dimension_type", Value::Compound(dimension_type)).unwrap();
 
-    let mut codec_encoder = nbt::ser::Encoder::new(&mut dimension_codec_bytes, None);
-    blob.serialize(&mut codec_encoder).map_err(|e| NetError::SerializeError(format!("Failed serializing dimension code: {}", e)))?;
+    let mut biome_registry = HashMap::new();
+    let mut plains_properties = HashMap::new();
 
-    let mut encoder = nbt::ser::Encoder::new(&mut dimension_bytes, None);
-    Value::Compound(dimension.clone().as_hash_map()).serialize(&mut encoder).map_err(|e| NetError::SerializeError(format!("Failed serializing dimension code: {}", e)))?;
+    plains_properties.insert(String::from("precipitation"), Value::String(String::from("rain")));
+    plains_properties.insert(String::from("depth"), Value::Float(0.125f32));
+    plains_properties.insert(String::from("temperature"), Value::Float(0.8f32));
+    plains_properties.insert(String::from("scale"), Value::Float(0.05f32));
+    plains_properties.insert(String::from("downfall"), Value::Float(0.4f32));
+    plains_properties.insert(String::from("category"), Value::String(String::from("plains")));
+
+    let biome_value = vec![Value::Compound(plains_properties)];
+
+    biome_registry.insert(String::from("type"), Value::String(String::from("minecraft:worldgen/biome")));
+    biome_registry.insert(String::from("value"), Value::List(biome_value));
+
+    dimension_codec.insert(String::from("worldgen/biome"), Value::Compound(biome_registry)).unwrap();
+
+    let dimension = Value::Compound(element);
+
+    let mut dcba: Vec<u8> = Vec::new();
+    dimension_codec.to_writer(&mut dcba);
+
+    let mut dba = Vec::new();
+    dimension.to_writer(&mut dba);
 
     let join_game = JoinGame {
         entity_id,
@@ -223,8 +195,8 @@ pub async fn join_game(client: &mut Client, entity_id: i32) -> Result<(), NetErr
         prev_gamemode: Gamemode::Survival as i8,
         world_names: vec!["world".to_string()],
         world_name: "world".to_string(),
-        dimension_codec: dimension_codec_bytes.as_slice(),
-        dimension: dimension_bytes.as_slice(),
+        dimension_codec: dcba,
+        dimension: dba,
         hashed_seed: 0,
         max_players: Varint(42),
         view_distance: Varint(10),
@@ -234,5 +206,7 @@ pub async fn join_game(client: &mut Client, entity_id: i32) -> Result<(), NetErr
         flat: false,
     };
 
-    client.send_packet(0x24, join_game).await
+    let response = client.send_packet(0x24, join_game).await;
+    debug!("Sent a packet with id {}", 0x24);
+    response
 }

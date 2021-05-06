@@ -1,4 +1,5 @@
 use uuid::Uuid;
+use log::debug;
 
 use crate::{
     net::{
@@ -51,13 +52,16 @@ impl Player {
     }
 
     pub async fn set_active_slot(&mut self, slot: i8) -> Result<(), NetError> {
+        debug!("Called `set_active_slot` in `player.rs`");
         self.active_slot = slot;
         let held_item_change = HeldItemChange {
             slot
         };
 
-        self.client_mut()
+        let response = self.client_mut()
             .send_packet(0x3F, held_item_change)
-            .await
+            .await;
+        debug!("Sent a packet with id 0x3F");
+        response
     }
 }
