@@ -340,6 +340,10 @@ impl<'a, 'de: 'a> serde::Deserializer<'de> for &'a mut Deserializer {
     {
         unreachable!("Ignored any is not part of the minecraft protocol.");
     }
+
+    fn is_human_readable(&self) -> bool {
+        false
+    }
 }
 
 struct SeqAccess<'de> {
