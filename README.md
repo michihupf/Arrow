@@ -1,16 +1,6 @@
 # Arrow
 An attempt of making a server for Minecraft.
 
-## TODO
-
-- [x] Implement Handshake
-- [ ] Fix Status
-- [ ] CLI
-- [ ] Commands
-- [ ] Implement Play State
-  - [ ] Players
-  - [ ] Entities
-
 #### License
 
 <sup>
