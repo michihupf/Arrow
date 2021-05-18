@@ -1,4 +1,4 @@
-use std::io::Read;
+use std::io::{Read, Write};
 
 use serde::Deserialize;
 
@@ -34,9 +34,9 @@ impl<'de> Deserialize<'de> for VarLong {
 /// [SerdeError](super::error::SerdeError) variant.
 ///
 /// # Errors
-/// - A [SerdeError::DeserializeError](super::error::SerdeError::DeserializeError) containing
+/// - A [DeserializeError](super::error::SerdeError::DeserializeError) containing
 /// "VarInt too long." when the VarInt is longer than 5 bytes.
-/// - A [SerdeError::UnexpectedEof](super::error::SerdeError::UnexpectedEof) when there are no
+/// - A [UnexpectedEof](super::error::SerdeError::UnexpectedEof) when there are no
 /// remaining bytes.
 pub fn read_varint<R>(mut reader: R) -> Result<i32>
 where
@@ -65,6 +65,36 @@ where
     }
 
     Ok(result)
+}
+
+/// Writes a [VarInt](https://wiki.vg/Protocol#VarInt_and_VarLong) to a struct implementing the
+/// [Write](std::io::Write) trait.
+///
+/// # Returns
+/// A [Result](super::error::Result) containing a `()` or a [SerdeError](super::error::SerdeError).
+///
+/// # Errors
+/// - A [SerializeError](super::error::SerdeError::SerializeError) when writing to `output` failed.
+pub fn write_varint<W>(value: i32, mut output: W) -> Result<()> where W: Write {
+    let mut value = value;
+    let mut buf = vec![];
+
+    loop {
+        let mut tmp = (value & 0b01111111) as u8;
+
+        value >>= 7;
+        if value != 0 {
+            tmp |= 0b10000000;
+        }
+
+        buf.push(tmp);
+
+        if value != 0 {
+            break;
+        }
+    } 
+
+    output.write_all(&buf).map_err(|e| SerdeError::SerializeError(format!("{}", e)))
 }
 
 /// Reads a [VarLong](https://wiki.vg/Protocol#VarInt_and_VarLong) from a struct implementing the [Read](std::io::Read) trait.
@@ -108,3 +138,34 @@ where
 
     Ok(result)
 }
+
+/// Writes a [VarLong](https://wiki.vg/Protocol#VarInt_and_VarLong) to a struct implementing the
+/// [Write](std::io::Write) trait.
+///
+/// # Returns
+/// A [Result](super::error::Result) containing a `()` or a [SerdeError](super::error::SerdeError).
+///
+/// # Errors
+/// - A [SerializeError](super::error::SerdeError::SerializeError) when writing to `output` failed.
+pub fn write_varlong<W>(value: i64, mut output: W) -> Result<()> where W: Write {
+    let mut value = value;
+    let mut buf = vec![];
+
+    loop {
+        let mut tmp = (value & 0b01111111) as u8;
+
+        value >>= 7;
+        if value != 0 {
+            tmp |= 0b10000000;
+        }
+
+        buf.push(tmp);
+
+        if value != 0 {
+            break;
+        }
+    } 
+
+    output.write_all(&buf).map_err(|e| SerdeError::SerializeError(format!("{}", e)))
+}
+

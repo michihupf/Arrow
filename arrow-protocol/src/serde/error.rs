@@ -8,12 +8,22 @@ pub enum SerdeError {
 }
 
 impl std::error::Error for SerdeError {}
+
 impl serde::de::Error for SerdeError {
     fn custom<T>(t: T) -> Self
     where
         T: std::fmt::Display,
     {
         Self::DeserializeError(format!("{}", t))
+    }
+}
+
+impl serde::ser::Error for SerdeError {
+    fn custom<T>(t: T) -> Self
+    where
+        T: std::fmt::Display,
+    {
+        Self::SerializeError(format!("{}", t))
     }
 }
 
