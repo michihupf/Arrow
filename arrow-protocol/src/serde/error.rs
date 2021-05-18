@@ -1,6 +1,6 @@
 pub type Result<R> = std::result::Result<R, SerdeError>;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum SerdeError {
     UnexpectedEof,
     SerializeError(String),

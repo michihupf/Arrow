@@ -192,6 +192,23 @@ pub fn write_varint<W>(value: i32, mut output: W) -> Result<()> where W: Write {
     output.write_all(&buf).map_err(|e| SerdeError::SerializeError(format!("{}", e)))
 }
 
+pub fn varint_len(value: i32) -> usize {
+    let mut value = value;
+    let mut len = 0;
+
+    loop {
+        value >>= 7;
+
+        len += 1;
+
+        if value != 0 {
+            break;
+        }
+    } 
+    
+    len
+}
+
 /// Reads a [VarLong](https://wiki.vg/Protocol#VarInt_and_VarLong) from a struct implementing the [Read](std::io::Read) trait.
 ///
 /// # Returns
@@ -263,4 +280,22 @@ pub fn write_varlong<W>(value: i64, mut output: W) -> Result<()> where W: Write 
 
     output.write_all(&buf).map_err(|e| SerdeError::SerializeError(format!("{}", e)))
 }
+
+pub fn varlong_len(value: i64) -> usize {
+    let mut value = value;
+    let mut len = 0;
+
+    loop {
+        value >>= 7;
+
+        len += 1;
+
+        if value != 0 {
+            break;
+        }
+    } 
+    
+    len
+}
+
 
