@@ -1,6 +1,6 @@
 pub mod serverbound {
     use crate::serde::varint::VarInt;
-    use serde::{Serialize, Deserialize};
+    use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize)]
     pub struct Handshake {
@@ -12,8 +12,15 @@ pub mod serverbound {
 
     impl Handshake {
         /// Create a new Handshake packet.
-        pub fn new(protocol_version: VarInt, host: String, port: u16, next_state: VarInt) -> Self { Self { protocol_version, host, port, next_state } }
-    
+        pub fn new(protocol_version: VarInt, host: String, port: u16, next_state: VarInt) -> Self {
+            Self {
+                protocol_version,
+                host,
+                port,
+                next_state,
+            }
+        }
+
         /// Get the protocol version of the client.
         pub fn protocol_version(&self) -> &VarInt {
             &self.protocol_version

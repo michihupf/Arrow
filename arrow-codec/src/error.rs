@@ -16,4 +16,3 @@ impl From<Error> for DecoderError {
         Self(format!("Failed decoding: {}", e))
     }
 }
-

@@ -1,6 +1,9 @@
-use tokio_util::codec::{Decoder, Encoder};
+use arrow_protocol::serde::{
+    error::SerdeError,
+    varint::{read_varint, varint_len, write_varint},
+};
 use bytes::BytesMut;
-use arrow_protocol::serde::{error::SerdeError, varint::{read_varint, varint_len, write_varint}};
+use tokio_util::codec::{Decoder, Encoder};
 
 use crate::error::{DecoderError, EncoderError};
 
@@ -9,11 +12,13 @@ pub struct McCodec;
 pub struct Packet {
     len: i32,
     id: i32,
-    data: Vec<u8>
+    data: Vec<u8>,
 }
 
 impl Packet {
-    pub fn new(len: i32, id: i32, data: Vec<u8>) -> Self { Self { len, id, data } }
+    pub fn new(len: i32, id: i32, data: Vec<u8>) -> Self {
+        Self { len, id, data }
+    }
 
     /// Get the packet's len.
     pub fn len(&self) -> i32 {
@@ -44,7 +49,7 @@ impl Decoder for McCodec {
         let len = match read_varint(&src[..src.len().min(5)]) {
             Ok(v) => v,
             Err(e) if e == SerdeError::UnexpectedEof => return Ok(None),
-            Err(e) => return Err(DecoderError(format!("{}", e)))
+            Err(e) => return Err(DecoderError(format!("{}", e))),
         };
 
         let mut offset = varint_len(len);
@@ -55,12 +60,16 @@ impl Decoder for McCodec {
 
         let id = match read_varint(&src[offset..(offset + 5).min(src.len())]) {
             Ok(v) => v,
-            Err(e) => return Err(DecoderError(format!("{}", e)))
+            Err(e) => return Err(DecoderError(format!("{}", e))),
         };
 
         offset += varint_len(id);
 
-        Ok(Some(Packet::new(len, id, src[offset..len as usize - varint_len(id) + offset].to_vec())))
+        Ok(Some(Packet::new(
+            len,
+            id,
+            src[offset..len as usize - varint_len(id) + offset].to_vec(),
+        )))
     }
 }
 
@@ -72,8 +81,10 @@ impl Encoder<Packet> for McCodec {
 
         let mut buffer = Vec::with_capacity(len);
 
-        write_varint(len as i32, &mut buffer).map_err(|e| EncoderError(format!("Failed encoding varint: {}", e)))?;
-        write_varint(item.id(), &mut buffer).map_err(|e| EncoderError(format!("Failed encoding varint: {}", e)))?;
+        write_varint(len as i32, &mut buffer)
+            .map_err(|e| EncoderError(format!("Failed encoding varint: {}", e)))?;
+        write_varint(item.id(), &mut buffer)
+            .map_err(|e| EncoderError(format!("Failed encoding varint: {}", e)))?;
         buffer.append(&mut item.data);
 
         dst.copy_from_slice(&buffer);

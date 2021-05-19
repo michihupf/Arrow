@@ -1,7 +1,12 @@
 use std::io::{Read, Write};
 use std::result::Result as StdResult;
 
-use serde::{Deserialize, Serialize, de::{SeqAccess, Visitor}, ser::Error as SerError, de::Error as DeError};
+use serde::{
+    de::Error as DeError,
+    de::{SeqAccess, Visitor},
+    ser::Error as SerError,
+    Deserialize, Serialize,
+};
 
 use super::error::{Result, SerdeError};
 
@@ -29,12 +34,17 @@ impl<'de> Visitor<'de> for VarIntVisitor {
         formatter.write_str("expected seq")
     }
 
-    fn visit_seq<A>(self, mut seq: A) -> StdResult<Self::Value, A::Error> where A: SeqAccess<'de> {
+    fn visit_seq<A>(self, mut seq: A) -> StdResult<Self::Value, A::Error>
+    where
+        A: SeqAccess<'de>,
+    {
         let mut i = 0;
         let mut result = 0;
 
         loop {
-            let read: u8 = seq.next_element()?.ok_or(A::Error::custom("Unexpected eof."))?;
+            let read: u8 = seq
+                .next_element()?
+                .ok_or(A::Error::custom("Unexpected eof."))?;
 
             let value = read & 0b01111111;
             result |= (value << (7 * i)) as i32;
@@ -57,7 +67,8 @@ impl<'de> Visitor<'de> for VarIntVisitor {
 impl Serialize for VarInt {
     fn serialize<S>(&self, serializer: S) -> StdResult<S::Ok, S::Error>
     where
-        S: serde::Serializer {
+        S: serde::Serializer,
+    {
         let mut buf = vec![];
 
         match write_varint(self.0, &mut buf) {
@@ -83,12 +94,17 @@ impl<'de> Visitor<'de> for VarLongVisitor {
         formatter.write_str("expected seq")
     }
 
-    fn visit_seq<A>(self, mut seq: A) -> StdResult<Self::Value, A::Error> where A: SeqAccess<'de> {
+    fn visit_seq<A>(self, mut seq: A) -> StdResult<Self::Value, A::Error>
+    where
+        A: SeqAccess<'de>,
+    {
         let mut i = 0;
         let mut result = 0;
 
         loop {
-            let read: u8 = seq.next_element()?.ok_or(A::Error::custom("Unexpected eof."))?;
+            let read: u8 = seq
+                .next_element()?
+                .ok_or(A::Error::custom("Unexpected eof."))?;
 
             let value = read & 0b01111111;
             result |= (value << (7 * i)) as i64;
@@ -111,7 +127,8 @@ impl<'de> Visitor<'de> for VarLongVisitor {
 impl Serialize for VarLong {
     fn serialize<S>(&self, serializer: S) -> StdResult<S::Ok, S::Error>
     where
-        S: serde::Serializer {
+        S: serde::Serializer,
+    {
         let mut buf = vec![];
 
         match write_varlong(self.0, &mut buf) {
@@ -120,7 +137,6 @@ impl Serialize for VarLong {
         }
     }
 }
-
 
 /// Reads a [VarInt](https://wiki.vg/Protocol#VarInt_and_VarLong) from a struct implementing the [Read](std::io::Read) trait.
 ///
@@ -167,7 +183,10 @@ where
 ///
 /// # Errors
 /// - A [SerializeError](super::error::SerdeError::SerializeError) when writing to `output` failed.
-pub fn write_varint<W>(value: i32, mut output: W) -> Result<()> where W: Write {
+pub fn write_varint<W>(value: i32, mut output: W) -> Result<()>
+where
+    W: Write,
+{
     let mut value = value;
     let mut buf = vec![];
 
@@ -184,9 +203,11 @@ pub fn write_varint<W>(value: i32, mut output: W) -> Result<()> where W: Write {
         if value == 0 {
             break;
         }
-    } 
+    }
 
-    output.write_all(&buf).map_err(|e| SerdeError::SerializeError(format!("{}", e)))
+    output
+        .write_all(&buf)
+        .map_err(|e| SerdeError::SerializeError(format!("{}", e)))
 }
 
 pub fn varint_len(value: i32) -> usize {
@@ -201,8 +222,8 @@ pub fn varint_len(value: i32) -> usize {
         if value == 0 {
             break;
         }
-    } 
-    
+    }
+
     len
 }
 
@@ -234,7 +255,9 @@ where
 
         count += 1;
         if count > 10 {
-            return Err(SerdeError::DeserializeError("VarLong too long.".to_string()));
+            return Err(SerdeError::DeserializeError(
+                "VarLong too long.".to_string(),
+            ));
         }
 
         (read & 0b10000000) > 0
@@ -251,7 +274,10 @@ where
 ///
 /// # Errors
 /// - A [SerializeError](super::error::SerdeError::SerializeError) when writing to `output` failed.
-pub fn write_varlong<W>(value: i64, mut output: W) -> Result<()> where W: Write {
+pub fn write_varlong<W>(value: i64, mut output: W) -> Result<()>
+where
+    W: Write,
+{
     let mut value = value;
     let mut buf = vec![];
 
@@ -268,9 +294,11 @@ pub fn write_varlong<W>(value: i64, mut output: W) -> Result<()> where W: Write 
         if value == 0 {
             break;
         }
-    } 
+    }
 
-    output.write_all(&buf).map_err(|e| SerdeError::SerializeError(format!("{}", e)))
+    output
+        .write_all(&buf)
+        .map_err(|e| SerdeError::SerializeError(format!("{}", e)))
 }
 
 pub fn varlong_len(value: i64) -> usize {
@@ -285,9 +313,7 @@ pub fn varlong_len(value: i64) -> usize {
         if value == 0 {
             break;
         }
-    } 
-    
+    }
+
     len
 }
-
-
