@@ -49,7 +49,7 @@ impl Decoder for McCodec {
 
         let mut offset = varint_len(len);
 
-        if len as usize > src.len() {
+        if len as usize > src.len() - offset {
             return Ok(None);
         }
 
@@ -60,7 +60,7 @@ impl Decoder for McCodec {
 
         offset += varint_len(id);
 
-        Ok(Some(Packet::new(len, id, src[offset..].to_vec())))
+        Ok(Some(Packet::new(len, id, src[offset..len as usize - varint_len(id) + offset].to_vec())))
     }
 }
 

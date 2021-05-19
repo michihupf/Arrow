@@ -1,6 +1,8 @@
 use std::io::Error;
 
+#[derive(Debug)]
 pub struct EncoderError(pub String);
+#[derive(Debug)]
 pub struct DecoderError(pub String);
 
 impl From<Error> for EncoderError {
