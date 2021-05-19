@@ -137,29 +137,26 @@ pub fn read_varint<R>(mut reader: R) -> Result<i32>
 where
     R: Read,
 {
-    let mut i = 0;
+    let mut count = 0;
     let mut result = 0;
     let mut read: u8;
-
-    loop {
+    while {
         let buf = &mut [0];
         reader.read(buf).unwrap();
         read = buf[0];
-        let value = buf[0] & 0b01111111;
-        result |= (value << (7 * i)) as i32;
 
-        i += 1;
+        let value = (read & 0b01111111) as u32;
+        result |= value << (7 * count);
 
-        if i > 5 {
+        count += 1;
+        if count > 5 {
             return Err(SerdeError::DeserializeError("VarInt too long.".to_string()));
         }
 
-        if (read & 0b10000000) != 0 {
-            break;
-        }
-    }
+        (read & 0b10000000) > 0
+    } {}
 
-    Ok(result)
+    Ok(result as i32)
 }
 
 /// Writes a [VarInt](https://wiki.vg/Protocol#VarInt_and_VarLong) to a struct implementing the
@@ -184,7 +181,7 @@ pub fn write_varint<W>(value: i32, mut output: W) -> Result<()> where W: Write {
 
         buf.push(tmp);
 
-        if value != 0 {
+        if value == 0 {
             break;
         }
     } 
@@ -201,7 +198,7 @@ pub fn varint_len(value: i32) -> usize {
 
         len += 1;
 
-        if value != 0 {
+        if value == 0 {
             break;
         }
     } 
@@ -224,31 +221,26 @@ pub fn read_varlong<R>(mut reader: R) -> Result<i64>
 where
     R: Read,
 {
-    let mut i = 0;
+    let mut count = 0;
     let mut result = 0;
     let mut read: u8;
-
-    loop {
+    while {
         let buf = &mut [0];
         reader.read(buf).unwrap();
         read = buf[0];
-        let value = buf[0] & 0b01111111;
-        result |= (value << (7 * i)) as i64;
 
-        i += 1;
+        let value = (read & 0b01111111) as u64;
+        result |= value << (7 * count);
 
-        if i > 10 {
-            return Err(SerdeError::DeserializeError(
-                "VarLong too long.".to_string(),
-            ));
+        count += 1;
+        if count > 10 {
+            return Err(SerdeError::DeserializeError("VarLong too long.".to_string()));
         }
 
-        if (read & 0b10000000) != 0 {
-            break;
-        }
-    }
+        (read & 0b10000000) > 0
+    } {}
 
-    Ok(result)
+    Ok(result as i64)
 }
 
 /// Writes a [VarLong](https://wiki.vg/Protocol#VarInt_and_VarLong) to a struct implementing the
@@ -273,7 +265,7 @@ pub fn write_varlong<W>(value: i64, mut output: W) -> Result<()> where W: Write 
 
         buf.push(tmp);
 
-        if value != 0 {
+        if value == 0 {
             break;
         }
     } 
@@ -290,7 +282,7 @@ pub fn varlong_len(value: i64) -> usize {
 
         len += 1;
 
-        if value != 0 {
+        if value == 0 {
             break;
         }
     } 
