@@ -1,9 +1,7 @@
+pub mod client;
 pub mod error;
 
-use arrow_codec::codec::McCodec;
-use bytes::BytesMut;
-use tokio::{io::AsyncReadExt, net::TcpListener};
-use tokio_util::codec::Decoder;
+use tokio::net::TcpListener;
 
 use error::{NetError, Result};
 
@@ -13,22 +11,26 @@ pub async fn start_server(host: &str, port: u16) -> Result<()> {
         .map_err(|e| NetError::ServerBindError(format!("{}", e)))?;
 
     loop {
-        let (mut socket, _) = listener
+        let (socket, _) = listener
             .accept()
             .await
             .map_err(|e| NetError::ClientAcceptError(format!("{}", e)))?;
 
-        let mut buf = BytesMut::new();
-        let mut decoder = McCodec;
+        tokio::spawn(async move {
+            let mut buf = [0];
 
-        let handshake = loop {
-            socket.read_buf(&mut buf).await.unwrap();
+            socket.peek(&mut buf).await.unwrap();
 
-            if let Some(handshake) = decoder.decode(&mut buf).unwrap() {
-                break handshake;
+            match buf[0] {
+                0xfe => todo!("Implement legacy server ping."),
+                _ => {}
             }
-        };
 
-        dbg!(handshake.len(), handshake.id(), handshake.data());
+            let mut client = client::Client::new(socket);
+
+            if client.connect().await.is_err() {
+                return;
+            }
+        });
     }
 }

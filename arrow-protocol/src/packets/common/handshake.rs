@@ -1,5 +1,8 @@
 pub mod serverbound {
-    use crate::serde::varint::VarInt;
+    use crate::{
+        packets::{error::PacketError, Packet},
+        serde::{ser::Serializer, varint::VarInt},
+    };
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize)]
@@ -12,12 +15,12 @@ pub mod serverbound {
 
     impl Handshake {
         /// Create a new Handshake packet.
-        pub fn new(protocol_version: VarInt, host: String, port: u16, next_state: VarInt) -> Self {
+        pub fn new(protocol_version: i32, host: String, port: u16, next_state: i32) -> Self {
             Self {
-                protocol_version,
+                protocol_version: VarInt(protocol_version),
                 host,
                 port,
-                next_state,
+                next_state: VarInt(next_state),
             }
         }
 
@@ -39,6 +42,23 @@ pub mod serverbound {
         /// Get the next state.
         pub fn next_state(&self) -> &VarInt {
             &self.next_state
+        }
+    }
+
+    impl Packet for Handshake {
+        fn id(_: i32) -> i32
+        where
+            Self: Sized,
+        {
+            0x00
+        }
+
+        fn data_bytes(&self) -> Result<Vec<u8>, PacketError> {
+            let mut ser = Serializer::new();
+
+            self.serialize(&mut ser)?;
+
+            Ok(ser.get_bytes())
         }
     }
 }

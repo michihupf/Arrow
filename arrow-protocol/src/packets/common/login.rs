@@ -1,14 +1,19 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-use crate::{packets::Packet, serde::{error::SerdeError, ser::Serializer}};
+use crate::{
+    packets::{error::PacketError, Packet},
+    serde::ser::Serializer,
+};
 
 #[derive(Serialize, Deserialize)]
 pub struct LoginStart {
-    name: String
+    name: String,
 }
 
 impl LoginStart {
-    pub fn new(name: String) -> Self { Self { name } }
+    pub fn new(name: String) -> Self {
+        Self { name }
+    }
 
     pub fn name(&self) -> &String {
         &self.name
@@ -16,11 +21,18 @@ impl LoginStart {
 }
 
 impl Packet for LoginStart {
-    fn id() -> i32 where Self: Sized {
-        0x0
+    fn id(version: i32) -> i32
+    where
+        Self: Sized,
+    {
+        if (385..391).contains(&version) {
+            0x01
+        } else {
+            0x00
+        }
     }
 
-    fn data_bytes(&self) -> Result<Vec<u8>, SerdeError> {
+    fn data_bytes(&self) -> Result<Vec<u8>, PacketError> {
         let mut ser = Serializer::new();
 
         self.serialize(&mut ser)?;
@@ -28,4 +40,3 @@ impl Packet for LoginStart {
         Ok(ser.get_bytes())
     }
 }
-
