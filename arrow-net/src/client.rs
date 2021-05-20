@@ -6,17 +6,20 @@ use tokio_util::codec::Framed;
 
 use crate::error::NetError;
 
+/// A client that connected to the server.
 pub struct Client {
     framed: Framed<TcpStream, McCodec>,
 }
 
 impl Client {
+    /// Creates a new client using a [TcpStream](tokio::net::TcpStream).
     pub fn new(stream: TcpStream) -> Self {
         Self {
             framed: Framed::new(stream, McCodec::new(true)),
         }
     }
 
+    /// Handles the handshake packet and select the right state to continue in.
     pub async fn connect(&mut self) -> Result<(), NetError> {
         match self.next_packet().await? {
             PacketKind::Handshake {
