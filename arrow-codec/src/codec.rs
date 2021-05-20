@@ -10,7 +10,7 @@ use tokio_util::codec::{Decoder, Encoder};
 
 use crate::error::{DecoderError, EncoderError};
 
-/// The minecraft codec.
+/// The minecraft protocol codec.
 pub struct McCodec {
     protocol_version: i32,
     state: State,

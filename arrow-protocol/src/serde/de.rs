@@ -2,13 +2,13 @@ use std::vec::IntoIter;
 
 use super::{error::SerdeError, varint::read_varint};
 
-/// A [Deserializer](serde::Deserializer) trait implementation to deserialize minecraft packets.
+/// A [`serde::Deserializer`] trait implementation to deserialize minecraft packets.
 pub struct Deserializer {
     buffer: IntoIter<u8>,
 }
 
 impl Deserializer {
-    /// Create a Deserializer using a [Vec] of bytes.
+    /// Create a Deserializer using a [`Vec`] of bytes.
     pub fn new(bytes: Vec<u8>) -> Self {
         Self {
             buffer: bytes.into_iter(),

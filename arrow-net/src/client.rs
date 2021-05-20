@@ -12,7 +12,7 @@ pub struct Client {
 }
 
 impl Client {
-    /// Creates a new client using a [TcpStream](tokio::net::TcpStream).
+    /// Creates a new client using a [`tokio::net::TcpStream`].
     pub fn new(stream: TcpStream) -> Self {
         Self {
             framed: Framed::new(stream, McCodec::new(true)),

@@ -53,8 +53,8 @@ pub enum State {
 }
 
 impl PacketKind {
-    /// Gets a [Packet] using `self` and the protocol version.
-    pub fn get_packet(self, protocol_version: i32) -> Box<dyn Packet> {
+    /// Gets a [`Packet`] using `self` and the protocol version.
+    pub fn into_packet(self, protocol_version: i32) -> Box<dyn Packet> {
         use PacketKind::*;
 
         match self {
@@ -73,7 +73,7 @@ impl PacketKind {
         }
     }
 
-    /// Gets `self` using the [state](State), the information if its clientbound or serverbound,
+    /// Gets `self` using the [`state`](State), the information if its clientbound or serverbound,
     /// the protocol version, the id and the data.
     pub fn from_bytes(
         state: State,

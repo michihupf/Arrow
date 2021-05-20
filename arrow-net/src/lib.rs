@@ -1,6 +1,6 @@
 #[deny(missing_docs)]
 
-/// The client of the server.
+/// A client of the Minecraft protocol.
 pub mod client;
 /// The error for errors when binding, accepting, reading and writing.
 pub mod error;

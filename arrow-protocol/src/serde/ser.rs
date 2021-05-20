@@ -5,13 +5,13 @@ use serde::ser::{
 
 use super::error::SerdeError;
 
-/// A [Serializer](serde::Serializer) trait implementation for serializing minecraft packets.
+/// A [`serde::Serializer`] trait implementation for serializing minecraft packets.
 pub struct Serializer {
     output: Vec<u8>,
 }
 
 impl Serializer {
-    /// Creates a new Serializer
+    /// Creates a new Serializer.
     pub fn new() -> Self {
         Self { output: vec![] }
     }
