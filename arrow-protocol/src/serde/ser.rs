@@ -5,15 +5,18 @@ use serde::ser::{
 
 use super::error::SerdeError;
 
+/// A [Serializer](serde::Serializer) trait implementation for serializing minecraft packets.
 pub struct Serializer {
     output: Vec<u8>,
 }
 
 impl Serializer {
+    /// Creates a new Serializer
     pub fn new() -> Self {
         Self { output: vec![] }
     }
 
+    /// Get the bytes the serializer serialized to.
     pub fn get_bytes(self) -> Vec<u8> {
         self.output
     }
