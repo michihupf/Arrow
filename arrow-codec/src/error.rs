@@ -2,8 +2,11 @@ use std::io::Error;
 
 use arrow_protocol::packets::error::PacketError;
 
+/// A error for the encoder.
 #[derive(Debug)]
 pub struct EncoderError(pub String);
+
+/// A error for the decoder.
 #[derive(Debug)]
 pub struct DecoderError(pub String);
 

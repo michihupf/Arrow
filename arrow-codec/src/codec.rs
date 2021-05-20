@@ -10,6 +10,7 @@ use tokio_util::codec::{Decoder, Encoder};
 
 use crate::error::{DecoderError, EncoderError};
 
+/// The minecraft codec.
 pub struct McCodec {
     protocol_version: i32,
     state: State,
@@ -17,6 +18,7 @@ pub struct McCodec {
 }
 
 impl McCodec {
+    /// Creates a new codec using the information if the packets are clientbound or serverbound
     pub fn new(serverbound: bool) -> Self {
         Self {
             protocol_version: 0,
