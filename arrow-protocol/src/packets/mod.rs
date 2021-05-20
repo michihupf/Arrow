@@ -20,6 +20,7 @@ pub trait Packet {
 }
 
 /// A multi-version representation for packets.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PacketKind {
     /// The [Handshake](https://wiki.vg/Protocol#Handshake) packet.
     Handshake {

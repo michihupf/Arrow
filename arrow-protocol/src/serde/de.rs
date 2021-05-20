@@ -1,6 +1,6 @@
 use std::vec::IntoIter;
 
-use super::{error::SerdeError, varint::read_varint};
+use super::{error::SerdeError, varint::{varint_len, read_varint}};
 
 /// A [`serde::Deserializer`] trait implementation to deserialize minecraft packets.
 pub struct Deserializer {
@@ -176,11 +176,11 @@ impl<'a, 'de: 'a> serde::Deserializer<'de> for &'a mut Deserializer {
     where
         V: serde::de::Visitor<'de>,
     {
-        let len = read_varint(self.buffer.as_slice());
+        let len = read_varint(self.buffer.as_slice())?;
 
         let mut buf = vec![];
 
-        for _ in len {
+        for _ in 0..len {
             buf.push(self.get_u8()?);
         }
 
@@ -195,11 +195,15 @@ impl<'a, 'de: 'a> serde::Deserializer<'de> for &'a mut Deserializer {
     where
         V: serde::de::Visitor<'de>,
     {
-        let len = read_varint(self.buffer.as_slice());
+        let len = read_varint(self.buffer.as_slice())?;
+
+        for _ in 0..varint_len(len) {
+            self.get_u8()?;
+        }
 
         let mut buf = vec![];
 
-        for _ in len {
+        for _ in 0..len {
             buf.push(self.get_u8()?);
         }
 

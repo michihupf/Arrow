@@ -3,7 +3,7 @@ use serde::ser::{
     SerializeTupleStruct, SerializeTupleVariant,
 };
 
-use super::error::SerdeError;
+use super::{error::SerdeError, varint::{VarInt, write_varint}};
 
 /// A [`serde::Serializer`] trait implementation for serializing minecraft packets.
 pub struct Serializer {
@@ -109,8 +109,11 @@ impl<'a> serde::Serializer for &'a mut Serializer {
         unreachable!("Char is not part of the minecraft protocol.");
     }
 
-    fn serialize_str(self, _v: &str) -> Result<Self::Ok, Self::Error> {
-        todo!()
+    fn serialize_str(self, v: &str) -> Result<Self::Ok, Self::Error> {
+        write_varint(v.len() as i32, &mut self.output)?;
+        self.output.append(&mut v.as_bytes().to_vec());
+
+        Ok(())
     }
 
     fn serialize_bytes(self, _v: &[u8]) -> Result<Self::Ok, Self::Error> {
