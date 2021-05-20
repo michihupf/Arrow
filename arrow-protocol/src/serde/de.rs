@@ -216,11 +216,15 @@ impl<'a, 'de: 'a> serde::Deserializer<'de> for &'a mut Deserializer {
     where
         V: serde::de::Visitor<'de>,
     {
-        let len = read_varint(self.buffer.as_slice());
+        let len = read_varint(self.buffer.as_slice())?;
+
+        for _ in 0..varint_len(len) {
+            self.get_u8()?;
+        }
 
         let mut buf = vec![];
 
-        for _ in len {
+        for _ in 0..len {
             buf.push(self.get_u8()?);
         }
 
@@ -231,11 +235,15 @@ impl<'a, 'de: 'a> serde::Deserializer<'de> for &'a mut Deserializer {
     where
         V: serde::de::Visitor<'de>,
     {
-        let len = read_varint(self.buffer.as_slice());
+        let len = read_varint(self.buffer.as_slice())?;
+
+        for _ in 0..varint_len(len) {
+            self.get_u8()?;
+        }
 
         let mut buf = vec![];
 
-        for _ in len {
+        for _ in 0..len {
             buf.push(self.get_u8()?);
         }
 
@@ -282,7 +290,13 @@ impl<'a, 'de: 'a> serde::Deserializer<'de> for &'a mut Deserializer {
     where
         V: serde::de::Visitor<'de>,
     {
-        visitor.visit_seq(SeqAccess::new(self))
+        let len = read_varint(self.buffer.as_slice())?;
+
+        for _ in 0..varint_len(len) {
+            self.get_u8()?;
+        }
+
+        visitor.visit_seq(SeqAccess::new(self, len as usize))
     }
 
     fn deserialize_tuple<V>(self, _len: usize, visitor: V) -> Result<V::Value, Self::Error>
@@ -356,11 +370,12 @@ impl<'a, 'de: 'a> serde::Deserializer<'de> for &'a mut Deserializer {
 
 struct SeqAccess<'de> {
     de: &'de mut Deserializer,
+    len: usize,
 }
 
 impl<'de> SeqAccess<'de> {
-    fn new(de: &'de mut Deserializer) -> Self {
-        Self { de }
+    fn new(de: &'de mut Deserializer, len: usize) -> Self {
+        Self { de, len }
     }
 }
 
