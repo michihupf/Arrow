@@ -5,16 +5,22 @@ use crate::{
     serde::ser::Serializer,
 };
 
+/// The [Login Start](https://wiki.vg/Protocol#Login_Start) packet.
+///
+/// # Fields
+/// `name` is the name of the joining player.
 #[derive(Serialize, Deserialize)]
 pub struct LoginStart {
     name: String,
 }
 
 impl LoginStart {
+    /// Creates a new Login Start package from the name.
     pub fn new(name: String) -> Self {
         Self { name }
     }
 
+    /// Get the name of the joining player.
     pub fn name(&self) -> &String {
         &self.name
     }

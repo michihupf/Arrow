@@ -4,9 +4,12 @@ use crate::serde::error::SerdeError;
 
 use super::State;
 
+/// The error for packets.
 #[derive(Debug)]
 pub enum PacketError {
+    /// Returned when serializing or deserializing failed.
     SerdeError(String),
+    /// Returned when the id is unknown for the current status.
     InvalidPacketId(i32, State),
 }
 
