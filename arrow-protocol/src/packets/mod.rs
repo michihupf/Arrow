@@ -1,4 +1,7 @@
+use std::fmt::Display;
+
 use serde::Deserialize;
+use uuid::Uuid;
 
 use self::{common::*, error::PacketError};
 use crate::serde::de::Deserializer;
@@ -35,6 +38,8 @@ pub enum PacketKind {
     },
     /// The [Login Start](https://wiki.vg/Protocol#Login_Start) packet.
     LoginStart(String),
+    /// The [Login Success](https://wiki.vg/Protocol#Login_Success) packet.
+    LoginSuccess(Uuid, String),
 }
 
 #[derive(Debug, Clone)]
@@ -70,7 +75,8 @@ impl PacketKind {
                 port,
                 next_state,
             )),
-            LoginStart(name) => Box::new(login::LoginStart::new(name)),
+            LoginStart(name) => Box::new(login::serverbound::LoginStart::new(name)),
+            LoginSuccess(uuid, name) => Box::new(login::clientbound::LoginSuccess::new(uuid, name)),
         }
     }
 
@@ -89,17 +95,22 @@ impl PacketKind {
             match state {
                 State::Handshake => match id {
                     0 => {
-                        let packet = login::LoginStart::deserialize(&mut de)?;
+                        let packet = handshake::serverbound::Handshake::deserialize(&mut de)?;
 
-                        Ok(PacketKind::LoginStart(packet.name().clone()))
+                        Ok(PacketKind::Handshake {
+                            protocol_version: packet.protocol_version.0,
+                            host: packet.host,
+                            port: packet.port,
+                            next_state: packet.next_state.0,
+                        })
                     }
                     i => return Err(PacketError::InvalidPacketId(i, state)),
                 },
                 State::Login => match id {
-                    i if i == login::LoginStart::id(protocol_version) => {
-                        let packet = login::LoginStart::deserialize(&mut de)?;
+                    i if i == login::serverbound::LoginStart::id(protocol_version) => {
+                        let packet = login::serverbound::LoginStart::deserialize(&mut de)?;
 
-                        Ok(PacketKind::LoginStart(packet.name().clone()))
+                        Ok(PacketKind::LoginStart(packet.name))
                     }
                     i => return Err(PacketError::InvalidPacketId(i, state)),
                 },
@@ -108,6 +119,23 @@ impl PacketKind {
             }
         } else {
             todo!("add clientbound support");
+        }
+    }
+}
+
+impl Display for PacketKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use PacketKind::*;
+
+        match self {
+            Handshake {
+                protocol_version: _,
+                host: _,
+                port: _,
+                next_state: _,
+            } => write!(f, "Handshake"),
+            LoginStart(_) => write!(f, "LoginStart"),
+            LoginSuccess(_, _) => write!(f, "LoginSuccess"),
         }
     }
 }

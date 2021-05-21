@@ -4,7 +4,12 @@
 pub mod client;
 /// The error for errors when binding, accepting, reading and writing.
 pub mod error;
+/// A player in the play state.
+pub mod player;
+/// The server that stores all players.
+pub mod server;
 
+use log::{error, info};
 use tokio::net::TcpListener;
 
 use error::{NetError, Result};
@@ -15,11 +20,19 @@ pub async fn start_server(host: &str, port: u16) -> Result<()> {
         .await
         .map_err(|e| NetError::ServerBindError(format!("{}", e)))?;
 
+    info!("Started server on {}:{}.", host, port);
+
     loop {
-        let (socket, _) = listener
+        let (socket, ip) = listener
             .accept()
             .await
             .map_err(|e| NetError::ClientAcceptError(format!("{}", e)))?;
+
+        info!(
+            "Client with ip {} and port {} connected.",
+            ip.ip(),
+            ip.port()
+        );
 
         tokio::spawn(async move {
             let mut buf = [0];
@@ -27,15 +40,15 @@ pub async fn start_server(host: &str, port: u16) -> Result<()> {
             socket.peek(&mut buf).await.unwrap();
 
             match buf[0] {
-                0xfe => todo!("Implement legacy server ping."),
+                0xfe => {
+                    error!("Implement legacy server ping.");
+                    return;
+                }
                 _ => {}
             }
 
-            let mut client = client::Client::new(socket);
-
-            if client.connect().await.is_err() {
-                return;
-            }
+            let client = client::Client::new(socket);
+            client.connect().await;
         });
     }
 }

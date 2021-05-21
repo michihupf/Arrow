@@ -3,7 +3,10 @@ use serde::ser::{
     SerializeTupleStruct, SerializeTupleVariant,
 };
 
-use super::{error::SerdeError, varint::{VarInt, write_varint}};
+use super::{
+    error::SerdeError,
+    varint::{write_varint, VarInt},
+};
 
 /// A [`serde::Serializer`] trait implementation for serializing minecraft packets.
 pub struct Serializer {

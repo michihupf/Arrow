@@ -46,16 +46,16 @@ impl<'de> Visitor<'de> for VarIntVisitor {
                 .next_element()?
                 .ok_or(A::Error::custom("Unexpected eof."))?;
 
-            let value = read & 0b01111111;
-            result |= (value << (7 * i)) as i32;
+            let value = (read & 0b01111111) as i32;
+            result |= value << (7 * i);
 
             i += 1;
 
-            if i > 10 {
+            if i > 5 {
                 return Err(A::Error::custom("VarInt too long.".to_string()));
             }
 
-            if (read & 0b10000000) != 0 {
+            if (read & 0b10000000) == 0 {
                 break;
             }
         }
@@ -106,8 +106,8 @@ impl<'de> Visitor<'de> for VarLongVisitor {
                 .next_element()?
                 .ok_or(A::Error::custom("Unexpected eof."))?;
 
-            let value = read & 0b01111111;
-            result |= (value << (7 * i)) as i64;
+            let value = (read & 0b01111111) as i64;
+            result |= value << (7 * i);
 
             i += 1;
 
@@ -115,7 +115,7 @@ impl<'de> Visitor<'de> for VarLongVisitor {
                 return Err(A::Error::custom("VarLong too long.".to_string()));
             }
 
-            if (read & 0b10000000) != 0 {
+            if (read & 0b10000000) == 0 {
                 break;
             }
         }
@@ -156,6 +156,7 @@ where
     let mut count = 0;
     let mut result = 0;
     let mut read: u8;
+
     while {
         let buf = &mut [0];
         reader.read(buf).unwrap();

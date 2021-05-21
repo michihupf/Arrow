@@ -1,5 +1,5 @@
 use arrow_protocol::{
-    packets::{Packet, PacketKind, State},
+    packets::{error::PacketError, Packet, PacketKind, State},
     serde::{
         error::SerdeError,
         varint::{read_varint, varint_len, write_varint},
@@ -59,13 +59,22 @@ impl Decoder for McCodec {
 
         let data = &src[offset..len as usize + varint_len(len)];
 
-        let packet = PacketKind::from_bytes(
+        let packet = match PacketKind::from_bytes(
             self.state.clone(),
             self.serverbound,
             self.protocol_version,
             id,
             data.to_vec(),
-        )?;
+        ) {
+            Ok(p) => p,
+            Err(PacketError::SerdeError(s)) => {
+                if s == "Unexpected eof".to_string() {
+                    return Ok(None);
+                }
+                return Err(PacketError::SerdeError(s).into());
+            }
+            Err(e) => return Err(e.into()),
+        };
 
         if let PacketKind::Handshake {
             protocol_version,

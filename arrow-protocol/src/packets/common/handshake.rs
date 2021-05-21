@@ -13,10 +13,14 @@ pub mod serverbound {
     /// information.
     #[derive(Serialize, Deserialize)]
     pub struct Handshake {
-        protocol_version: VarInt,
-        host: String,
-        port: u16,
-        next_state: VarInt,
+        /// The protocol version of the client.
+        pub protocol_version: VarInt,
+        /// The host the client connected to.
+        pub host: String,
+        /// The port the client connected to.
+        pub port: u16,
+        /// The next state. Can be 1 for status or 2 for login.
+        pub next_state: VarInt,
     }
 
     impl Handshake {
@@ -28,26 +32,6 @@ pub mod serverbound {
                 port,
                 next_state: VarInt(next_state),
             }
-        }
-
-        /// Get the protocol version of the client.
-        pub fn protocol_version(&self) -> &VarInt {
-            &self.protocol_version
-        }
-
-        /// Get the host name the client connected to.
-        pub fn host(&self) -> &String {
-            &self.host
-        }
-
-        /// Get the port the client connected to.
-        pub fn port(&self) -> &u16 {
-            &self.port
-        }
-
-        /// Get the next state.
-        pub fn next_state(&self) -> &VarInt {
-            &self.next_state
         }
     }
 
