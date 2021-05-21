@@ -1,16 +1,25 @@
-use serde::ser::{SerializeMap, SerializeSeq, SerializeStruct, SerializeStructVariant, SerializeTuple, SerializeTupleStruct, SerializeTupleVariant};
+use serde::ser::{
+    SerializeMap, SerializeSeq, SerializeStruct, SerializeStructVariant, SerializeTuple,
+    SerializeTupleStruct, SerializeTupleVariant,
+};
 
-use super::error::SerdeError;
+use super::{
+    error::SerdeError,
+    varint::{write_varint, VarInt},
+};
 
+/// A [`serde::Serializer`] trait implementation for serializing minecraft packets.
 pub struct Serializer {
-    output: Vec<u8>
+    output: Vec<u8>,
 }
 
 impl Serializer {
+    /// Creates a new Serializer.
     pub fn new() -> Self {
         Self { output: vec![] }
     }
 
+    /// Get the bytes the serializer serialized to.
     pub fn get_bytes(self) -> Vec<u8> {
         self.output
     }
@@ -103,12 +112,17 @@ impl<'a> serde::Serializer for &'a mut Serializer {
         unreachable!("Char is not part of the minecraft protocol.");
     }
 
-    fn serialize_str(self, _v: &str) -> Result<Self::Ok, Self::Error> {
-        todo!()
+    fn serialize_str(self, v: &str) -> Result<Self::Ok, Self::Error> {
+        write_varint(v.len() as i32, &mut self.output)?;
+        self.output.append(&mut v.as_bytes().to_vec());
+
+        Ok(())
     }
 
-    fn serialize_bytes(self, _v: &[u8]) -> Result<Self::Ok, Self::Error> {
-        todo!()
+    fn serialize_bytes(self, v: &[u8]) -> Result<Self::Ok, Self::Error> {
+        self.output.append(&mut v.to_vec());
+
+        Ok(())
     }
 
     fn serialize_none(self) -> Result<Self::Ok, Self::Error> {
@@ -117,7 +131,8 @@ impl<'a> serde::Serializer for &'a mut Serializer {
 
     fn serialize_some<T: ?Sized>(self, _value: &T) -> Result<Self::Ok, Self::Error>
     where
-        T: serde::Serialize {
+        T: serde::Serialize,
+    {
         todo!()
     }
 
@@ -144,8 +159,9 @@ impl<'a> serde::Serializer for &'a mut Serializer {
         value: &T,
     ) -> Result<Self::Ok, Self::Error>
     where
-        T: serde::Serialize {
-            self.serialize_value(value)
+        T: serde::Serialize,
+    {
+        self.serialize_value(value)
     }
 
     fn serialize_newtype_variant<T: ?Sized>(
@@ -156,13 +172,16 @@ impl<'a> serde::Serializer for &'a mut Serializer {
         _value: &T,
     ) -> Result<Self::Ok, Self::Error>
     where
-        T: serde::Serialize {
+        T: serde::Serialize,
+    {
         todo!()
     }
 
     fn serialize_seq(self, len: Option<usize>) -> Result<Self::SerializeSeq, Self::Error> {
         if len.is_none() {
-            return Err(SerdeError::SerializeError("Can't serialize seq without length.".to_string()))
+            return Err(SerdeError::SerializeError(
+                "Can't serialize seq without length.".to_string(),
+            ));
         }
 
         Ok(self)
@@ -211,6 +230,10 @@ impl<'a> serde::Serializer for &'a mut Serializer {
     ) -> Result<Self::SerializeStructVariant, Self::Error> {
         todo!()
     }
+
+    fn is_human_readable(&self) -> bool {
+        false
+    }
 }
 
 impl<'a> SerializeSeq for &'a mut Serializer {
@@ -220,7 +243,8 @@ impl<'a> SerializeSeq for &'a mut Serializer {
 
     fn serialize_element<T: ?Sized>(&mut self, value: &T) -> Result<(), Self::Error>
     where
-        T: serde::Serialize {
+        T: serde::Serialize,
+    {
         value.serialize(&mut **self)
     }
 
@@ -236,7 +260,8 @@ impl<'a> SerializeTuple for &'a mut Serializer {
 
     fn serialize_element<T: ?Sized>(&mut self, value: &T) -> Result<(), Self::Error>
     where
-        T: serde::Serialize {
+        T: serde::Serialize,
+    {
         value.serialize(&mut **self)
     }
 
@@ -252,7 +277,8 @@ impl<'a> SerializeTupleStruct for &'a mut Serializer {
 
     fn serialize_field<T: ?Sized>(&mut self, value: &T) -> Result<(), Self::Error>
     where
-        T: serde::Serialize {
+        T: serde::Serialize,
+    {
         value.serialize(&mut **self)
     }
 
@@ -268,7 +294,8 @@ impl<'a> SerializeTupleVariant for &'a mut Serializer {
 
     fn serialize_field<T: ?Sized>(&mut self, value: &T) -> Result<(), Self::Error>
     where
-        T: serde::Serialize {
+        T: serde::Serialize,
+    {
         value.serialize(&mut **self)
     }
 
@@ -284,13 +311,15 @@ impl<'a> SerializeMap for &'a mut Serializer {
 
     fn serialize_key<T: ?Sized>(&mut self, _key: &T) -> Result<(), Self::Error>
     where
-        T: serde::Serialize {
+        T: serde::Serialize,
+    {
         todo!()
     }
 
     fn serialize_value<T: ?Sized>(&mut self, _value: &T) -> Result<(), Self::Error>
     where
-        T: serde::Serialize {
+        T: serde::Serialize,
+    {
         todo!()
     }
 
@@ -310,7 +339,8 @@ impl<'a> SerializeStruct for &'a mut Serializer {
         value: &T,
     ) -> Result<(), Self::Error>
     where
-        T: serde::Serialize {
+        T: serde::Serialize,
+    {
         value.serialize(&mut **self)
     }
 
@@ -330,7 +360,8 @@ impl<'a> SerializeStructVariant for &'a mut Serializer {
         value: &T,
     ) -> Result<(), Self::Error>
     where
-        T: serde::Serialize {
+        T: serde::Serialize,
+    {
         value.serialize(&mut **self)
     }
 
@@ -338,4 +369,3 @@ impl<'a> SerializeStructVariant for &'a mut Serializer {
         Ok(())
     }
 }
-

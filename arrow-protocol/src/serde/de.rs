@@ -1,22 +1,29 @@
 use std::vec::IntoIter;
 
-use super::{error::SerdeError, varint::read_varint};
+use super::{
+    error::SerdeError,
+    varint::{read_varint, varint_len},
+};
 
+/// A [`serde::Deserializer`] trait implementation to deserialize minecraft packets.
 pub struct Deserializer {
     buffer: IntoIter<u8>,
 }
 
 impl Deserializer {
+    /// Create a Deserializer using a [`Vec`] of bytes.
     pub fn new(bytes: Vec<u8>) -> Self {
         Self {
             buffer: bytes.into_iter(),
         }
     }
 
+    /// Returns the length of the remaining bytes.
     pub fn len(&self) -> usize {
         self.buffer.as_slice().len()
     }
 
+    /// Checks if there are bytes left.
     pub fn has_next(&self) -> bool {
         self.len() > 0
     }
@@ -172,11 +179,11 @@ impl<'a, 'de: 'a> serde::Deserializer<'de> for &'a mut Deserializer {
     where
         V: serde::de::Visitor<'de>,
     {
-        let len = read_varint(self.buffer.as_slice());
+        let len = read_varint(self.buffer.as_slice())?;
 
         let mut buf = vec![];
 
-        for _ in len {
+        for _ in 0..len {
             buf.push(self.get_u8()?);
         }
 
@@ -191,11 +198,15 @@ impl<'a, 'de: 'a> serde::Deserializer<'de> for &'a mut Deserializer {
     where
         V: serde::de::Visitor<'de>,
     {
-        let len = read_varint(self.buffer.as_slice());
+        let len = read_varint(self.buffer.as_slice())?;
+
+        for _ in 0..varint_len(len) {
+            self.get_u8()?;
+        }
 
         let mut buf = vec![];
 
-        for _ in len {
+        for _ in 0..len {
             buf.push(self.get_u8()?);
         }
 
@@ -208,11 +219,15 @@ impl<'a, 'de: 'a> serde::Deserializer<'de> for &'a mut Deserializer {
     where
         V: serde::de::Visitor<'de>,
     {
-        let len = read_varint(self.buffer.as_slice());
+        let len = read_varint(self.buffer.as_slice())?;
+
+        for _ in 0..varint_len(len) {
+            self.get_u8()?;
+        }
 
         let mut buf = vec![];
 
-        for _ in len {
+        for _ in 0..len {
             buf.push(self.get_u8()?);
         }
 
@@ -223,11 +238,15 @@ impl<'a, 'de: 'a> serde::Deserializer<'de> for &'a mut Deserializer {
     where
         V: serde::de::Visitor<'de>,
     {
-        let len = read_varint(self.buffer.as_slice());
+        let len = read_varint(self.buffer.as_slice())?;
+
+        for _ in 0..varint_len(len) {
+            self.get_u8()?;
+        }
 
         let mut buf = vec![];
 
-        for _ in len {
+        for _ in 0..len {
             buf.push(self.get_u8()?);
         }
 
@@ -339,6 +358,10 @@ impl<'a, 'de: 'a> serde::Deserializer<'de> for &'a mut Deserializer {
         V: serde::de::Visitor<'de>,
     {
         unreachable!("Ignored any is not part of the minecraft protocol.");
+    }
+
+    fn is_human_readable(&self) -> bool {
+        false
     }
 }
 

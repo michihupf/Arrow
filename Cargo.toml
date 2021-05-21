@@ -1,2 +1,2 @@
 [workspace]
-members = ["arrow", "arrow-protocol"]
+members = ["arrow", "arrow-protocol", "arrow-codec", "arrow-net"]

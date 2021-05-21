@@ -1,5 +1,5 @@
 [package]
-name = "arrow-protocol"
+name = "arrow-net"
 version = "0.1.0"
 authors = ["GreatGodOfFire <greatgodoffire@protonmail.com>"]
 edition = "2018"
@@ -7,6 +7,12 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.6", features = ["full"] }
+tokio-util = { version = "0.6.7", features = ["codec"] }
+bytes = "1.0"
+arrow-protocol = { path = "../arrow-protocol" }
+arrow-codec = { path = "../arrow-codec" }
+futures = "0.3"
+log = "0.4"
 uuid = { version = "0.8", features = ["serde", "v3"] }
 
