@@ -43,6 +43,10 @@ pub mod serverbound {
 
             Ok(ser.get_bytes())
         }
+
+        fn self_id(&self, protocol_version: i32) -> i32 {
+            Self::id(protocol_version)
+        }
     }
 }
 
@@ -92,6 +96,10 @@ pub mod clientbound {
             self.serialize(&mut ser)?;
 
             Ok(ser.get_bytes())
+        }
+
+        fn self_id(&self, protocol_version: i32) -> i32 {
+            Self::id(protocol_version)
         }
     }
 }

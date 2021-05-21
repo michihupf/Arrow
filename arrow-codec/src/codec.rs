@@ -5,7 +5,7 @@ use arrow_protocol::{
         varint::{read_varint, varint_len, write_varint},
     },
 };
-use bytes::BytesMut;
+use bytes::{Buf, BytesMut};
 use tokio_util::codec::{Decoder, Encoder};
 
 use crate::error::{DecoderError, EncoderError};
@@ -26,6 +26,31 @@ impl McCodec {
             serverbound,
         }
     }
+
+    fn read_varint(&self, src: &mut BytesMut) -> Result<Option<i32>, DecoderError> {
+        let mut count = 0;
+        let mut result = 0;
+        let mut read: u8;
+
+        while {
+            if src.len() == 0 {
+                return Ok(None);
+            }
+            read = src.get_u8();
+
+            let value = (read & 0b01111111) as u32;
+            result |= value << (7 * count);
+
+            count += 1;
+            if count > 5 {
+                return Err(DecoderError("VarInt too long.".to_string()));
+            }
+
+            (read & 0b10000000) > 0
+        } {}
+
+        Ok(Some(result as i32))
+    }
 }
 
 impl Decoder for McCodec {
@@ -38,33 +63,29 @@ impl Decoder for McCodec {
             return Ok(None);
         }
 
-        let len = match read_varint(&src[..src.len().min(5)]) {
-            Ok(v) => v,
-            Err(e) if e == SerdeError::UnexpectedEof => return Ok(None),
-            Err(e) => return Err(DecoderError(format!("{}", e))),
+        let len = if let Some(val) = self.read_varint(src)? {
+            val
+        } else {
+            return Ok(None);
         };
 
-        let mut offset = varint_len(len);
-
-        if len as usize > src.len() - offset {
+        if len as usize > src.len() {
             return Ok(None);
         }
 
-        let id = match read_varint(&src[offset..(offset + 5).min(src.len())]) {
-            Ok(v) => v,
-            Err(e) => return Err(DecoderError(format!("{}", e))),
+        let mut bytes = src.split_to(len as usize);
+        let id = if let Some(val) = self.read_varint(&mut bytes)? {
+            val
+        } else {
+            return Ok(None);
         };
-
-        offset += varint_len(id);
-
-        let data = &src[offset..len as usize + varint_len(len)];
 
         let packet = match PacketKind::from_bytes(
             self.state.clone(),
             self.serverbound,
             self.protocol_version,
             id,
-            data.to_vec(),
+            bytes.to_vec(),
         ) {
             Ok(p) => p,
             Err(PacketError::SerdeError(s)) => {
@@ -84,9 +105,9 @@ impl Decoder for McCodec {
         } = &packet
         {
             self.protocol_version = *protocol_version;
-            self.state = match next_state {
-                &1 => State::Status,
-                &2 => State::Login,
+            self.state = match *next_state {
+                1 => State::Status,
+                2 => State::Login,
                 i => return Err(DecoderError(format!("Invalid next state: {}", i))),
             }
         }
@@ -95,15 +116,13 @@ impl Decoder for McCodec {
     }
 }
 
-impl<P> Encoder<P> for McCodec
-where
-    P: Packet,
-{
+impl Encoder<PacketKind> for McCodec {
     type Error = EncoderError;
 
-    fn encode(&mut self, packet: P, dst: &mut BytesMut) -> Result<(), Self::Error> {
+    fn encode(&mut self, packet: PacketKind, dst: &mut BytesMut) -> Result<(), Self::Error> {
+        let packet: Box<dyn Packet> = packet.into_packet(self.protocol_version);
         let mut bytes = packet.data_bytes()?;
-        let id = P::id(self.protocol_version);
+        let id = packet.self_id(self.protocol_version);
         let len = bytes.len() + varint_len(id);
 
         let mut buffer = Vec::with_capacity(len);
@@ -113,8 +132,9 @@ where
         write_varint(id, &mut buffer)
             .map_err(|e| EncoderError(format!("Failed encoding varint: {}", e)))?;
         buffer.append(&mut bytes);
+        println!("{:?}", buffer);
 
-        dst.copy_from_slice(&buffer);
+        dst.extend_from_slice(&buffer);
 
         Ok(())
     }

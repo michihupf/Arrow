@@ -119,8 +119,10 @@ impl<'a> serde::Serializer for &'a mut Serializer {
         Ok(())
     }
 
-    fn serialize_bytes(self, _v: &[u8]) -> Result<Self::Ok, Self::Error> {
-        todo!()
+    fn serialize_bytes(self, v: &[u8]) -> Result<Self::Ok, Self::Error> {
+        self.output.append(&mut v.to_vec());
+
+        Ok(())
     }
 
     fn serialize_none(self) -> Result<Self::Ok, Self::Error> {
@@ -227,6 +229,10 @@ impl<'a> serde::Serializer for &'a mut Serializer {
         _len: usize,
     ) -> Result<Self::SerializeStructVariant, Self::Error> {
         todo!()
+    }
+
+    fn is_human_readable(&self) -> bool {
+        false
     }
 }
 

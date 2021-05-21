@@ -24,6 +24,18 @@ macro_rules! next_packet {
     };
 }
 
+macro_rules! send_packet {
+    ($self:ident $packet:expr) => {
+        match $self.framed.send($packet).await {
+            Ok(p) => p,
+            Err(e) => {
+                error!("Failed sending packet: {}", e.0);
+                return;
+            }
+        }
+    };
+}
+
 /// A client that connected to the server.
 pub struct Client {
     framed: Framed<TcpStream, McCodec>,
@@ -90,13 +102,17 @@ impl Client {
 
         let uuid = Uuid::new_v3(&Uuid::NAMESPACE_OID, name.as_bytes());
 
+        send_packet!(self PacketKind::LoginSuccess(uuid.clone(), name.clone()));
+
         if SERVER.read().await.has_uuid(&uuid).await {
             error!("Player already connected.");
         } else {
+            info!("Player {} with uuid {} logged in successfully.", name, uuid);
+
             SERVER
                 .write()
                 .await
-                .add_player(Arc::new(RwLock::new(Player::new(uuid, name, self))))
+                .add_player(Arc::new(RwLock::new(Player::new(uuid, name, self))));
         }
     }
 

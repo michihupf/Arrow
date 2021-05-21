@@ -18,6 +18,9 @@ pub trait Packet {
     where
         Self: Sized;
 
+    /// Returns the id for the given protocol version.
+    fn self_id(&self, protocol_version: i32) -> i32;
+
     /// Serialize the packet.
     fn data_bytes(&self) -> Result<Vec<u8>, PacketError>;
 }
