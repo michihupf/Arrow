@@ -156,7 +156,7 @@ pub mod clientbound {
         pub fn new(response: ResponseData) -> Result<Self, PacketError> {
             let json_response = match serde_json::to_string(&response) {
                 Ok(r) => r,
-                Err(_) => return Err(PacketError::BuildingJsonFailed()),
+                Err(_) => return Err(PacketError::BuildingJsonFailed),
             };
             Ok(Self { json_response })
         }
