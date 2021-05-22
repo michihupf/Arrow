@@ -1,3 +1,10 @@
+/// All packets that have the same data over all versions.
+pub mod common;
+/// The error module for packets.
+pub mod error;
+/// All version specific packets.
+pub mod version_specific;
+
 use std::fmt::Display;
 
 use serde::Deserialize;
@@ -5,11 +12,7 @@ use uuid::Uuid;
 
 use self::{common::*, error::PacketError};
 use crate::serde::de::Deserializer;
-
-/// All packets that have the same data over all versions.
-pub mod common;
-/// The error module for packets.
-pub mod error;
+use self::version_specific::*;
 
 /// A trait giving functions to get the packet id and serialize it.
 pub trait Packet {
@@ -44,7 +47,7 @@ pub enum PacketKind {
     /// The [Login Success](https://wiki.vg/Protocol#Login_Success) packet.
     LoginSuccess(Uuid, String),
     /// The [Request](https://wiki.vg/Protocol#Status) packet
-    StatusRequest(),
+    StatusRequest,
     /// The [Response](https://wiki.vg/Protocol#Status) packet
     StatusResponse(common::status::ResponseData),
     /// The [Ping](https://wiki.vg/Protocol#Status) packet
@@ -87,10 +90,12 @@ impl PacketKind {
                 next_state,
             ))),
             LoginStart(name) => Ok(Box::new(login::serverbound::LoginStart::new(name))),
-            LoginSuccess(uuid, name) => {
-                Ok(Box::new(login::clientbound::LoginSuccess::new(uuid, name)))
+            LoginSuccess(uuid, name) => if protocol_version >= 707 {
+                Ok(Box::new(v707::login::clientbound::LoginSuccess::new(uuid, name)))
+            } else {
+                Ok(Box::new(v47::login::clientbound::LoginSuccess::new(uuid.to_hyphenated().to_string(), name)))
             }
-            StatusRequest() => Ok(Box::new(common::status::serverbound::Request::new())),
+            StatusRequest => Ok(Box::new(common::status::serverbound::Request::new())),
             StatusResponse(json_response) => Ok(Box::new(
                 match common::status::clientbound::Response::new(json_response) {
                     Ok(s) => s,
@@ -125,7 +130,7 @@ impl PacketKind {
                             port: packet.port,
                             next_state: packet.next_state.0,
                         })
-                    },
+                    }
                     i => return Err(PacketError::InvalidPacketId(i, state)),
                 },
                 State::Login => match id {
@@ -133,19 +138,19 @@ impl PacketKind {
                         let packet = login::serverbound::LoginStart::deserialize(&mut de)?;
 
                         Ok(PacketKind::LoginStart(packet.name))
-                    },
+                    }
                     i => return Err(PacketError::InvalidPacketId(i, state)),
                 },
                 State::Play => todo!(),
                 State::Status => match id {
                     i if i == status::serverbound::Request::id(protocol_version) => {
-                        Ok(PacketKind::StatusRequest())
-                    },
+                        Ok(PacketKind::StatusRequest)
+                    }
                     i if i == status::serverbound::Ping::id(protocol_version) => {
                         let packet = status::serverbound::Ping::deserialize(&mut de)?;
 
                         Ok(PacketKind::StatusPing(packet.payload))
-                    },
+                    }
                     i => return Err(PacketError::InvalidPacketId(i, state)),
                 },
             }
@@ -168,7 +173,7 @@ impl Display for PacketKind {
             } => write!(f, "Handshake"),
             LoginStart(_) => write!(f, "LoginStart"),
             LoginSuccess(_, _) => write!(f, "LoginSuccess"),
-            StatusRequest() => write!(f, "StatusRequest"),
+            StatusRequest => write!(f, "StatusRequest"),
             StatusResponse(_) => write!(f, "StatusResponse"),
             StatusPing(_) => write!(f, "StatusPing"),
             StatusPong(_) => write!(f, "StatusPong"),

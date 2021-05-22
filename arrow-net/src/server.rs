@@ -14,7 +14,10 @@ pub struct Server {
 
 impl Server {
     pub const fn new(max_player_count: i32) -> Self {
-        Self { players: vec![], max_player_count }
+        Self {
+            players: vec![],
+            max_player_count,
+        }
     }
 
     pub fn add_player(&mut self, player: Arc<RwLock<Player>>) {
