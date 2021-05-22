@@ -43,6 +43,14 @@ pub enum PacketKind {
     LoginStart(String),
     /// The [Login Success](https://wiki.vg/Protocol#Login_Success) packet.
     LoginSuccess(Uuid, String),
+    /// The [Request](https://wiki.vg/Protocol#Status) packet
+    StatusRequest(),
+    /// The [Response](https://wiki.vg/Protocol#Status) packet
+    StatusResponse(common::status::ResponseData),
+    /// The [Ping](https://wiki.vg/Protocol#Status) packet
+    StatusPing(i64),
+    /// The [Pong](https://wiki.vg/Protocol#Status) packet
+    StatusPong(i64),
 }
 
 #[derive(Debug, Clone)]
@@ -63,7 +71,7 @@ pub enum State {
 
 impl PacketKind {
     /// Gets a [`Packet`] using `self` and the protocol version.
-    pub fn into_packet(self, protocol_version: i32) -> Box<dyn Packet> {
+    pub fn into_packet(self, protocol_version: i32) -> Result<Box<dyn Packet>, PacketError> {
         use PacketKind::*;
 
         match self {
@@ -72,14 +80,25 @@ impl PacketKind {
                 host,
                 port,
                 next_state,
-            } => Box::new(handshake::serverbound::Handshake::new(
+            } => Ok(Box::new(handshake::serverbound::Handshake::new(
                 protocol_version,
                 host,
                 port,
                 next_state,
+            ))),
+            LoginStart(name) => Ok(Box::new(login::serverbound::LoginStart::new(name))),
+            LoginSuccess(uuid, name) => {
+                Ok(Box::new(login::clientbound::LoginSuccess::new(uuid, name)))
+            }
+            StatusRequest() => Ok(Box::new(common::status::serverbound::Request::new())),
+            StatusResponse(json_response) => Ok(Box::new(
+                match common::status::clientbound::Response::new(json_response) {
+                    Ok(s) => s,
+                    Err(e) => return Err(e),
+                },
             )),
-            LoginStart(name) => Box::new(login::serverbound::LoginStart::new(name)),
-            LoginSuccess(uuid, name) => Box::new(login::clientbound::LoginSuccess::new(uuid, name)),
+            StatusPing(payload) => Ok(Box::new(common::status::serverbound::Ping::new(payload))),
+            StatusPong(payload) => Ok(Box::new(common::status::clientbound::Pong::new(payload))),
         }
     }
 
@@ -106,7 +125,7 @@ impl PacketKind {
                             port: packet.port,
                             next_state: packet.next_state.0,
                         })
-                    }
+                    },
                     i => return Err(PacketError::InvalidPacketId(i, state)),
                 },
                 State::Login => match id {
@@ -114,11 +133,21 @@ impl PacketKind {
                         let packet = login::serverbound::LoginStart::deserialize(&mut de)?;
 
                         Ok(PacketKind::LoginStart(packet.name))
-                    }
+                    },
                     i => return Err(PacketError::InvalidPacketId(i, state)),
                 },
                 State::Play => todo!(),
-                State::Status => todo!(),
+                State::Status => match id {
+                    i if i == status::serverbound::Request::id(protocol_version) => {
+                        Ok(PacketKind::StatusRequest())
+                    },
+                    i if i == status::serverbound::Ping::id(protocol_version) => {
+                        let packet = status::serverbound::Ping::deserialize(&mut de)?;
+
+                        Ok(PacketKind::StatusPing(packet.payload))
+                    },
+                    i => return Err(PacketError::InvalidPacketId(i, state)),
+                },
             }
         } else {
             todo!("add clientbound support");
@@ -139,6 +168,10 @@ impl Display for PacketKind {
             } => write!(f, "Handshake"),
             LoginStart(_) => write!(f, "LoginStart"),
             LoginSuccess(_, _) => write!(f, "LoginSuccess"),
+            StatusRequest() => write!(f, "StatusRequest"),
+            StatusResponse(_) => write!(f, "StatusResponse"),
+            StatusPing(_) => write!(f, "StatusPing"),
+            StatusPong(_) => write!(f, "StatusPong"),
         }
     }
 }

@@ -120,7 +120,10 @@ impl Encoder<PacketKind> for McCodec {
     type Error = EncoderError;
 
     fn encode(&mut self, packet: PacketKind, dst: &mut BytesMut) -> Result<(), Self::Error> {
-        let packet: Box<dyn Packet> = packet.into_packet(self.protocol_version);
+        let packet: Box<dyn Packet> = match packet.into_packet(self.protocol_version) {
+            Ok(b) => b,
+            Err(e) => return Err(EncoderError::from(e)),
+        };
         let mut bytes = packet.data_bytes()?;
         let id = packet.self_id(self.protocol_version);
         let len = bytes.len() + varint_len(id);
@@ -132,7 +135,6 @@ impl Encoder<PacketKind> for McCodec {
         write_varint(id, &mut buffer)
             .map_err(|e| EncoderError(format!("Failed encoding varint: {}", e)))?;
         buffer.append(&mut bytes);
-        println!("{:?}", buffer);
 
         dst.extend_from_slice(&buffer);
 
