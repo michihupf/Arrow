@@ -6,7 +6,7 @@ pub mod serverbound {
     };
     use serde::{Deserialize, Serialize};
 
-    /// The [Handshake](https://wiki.vg/Protocol#Handshake) packet.    
+    /// The [Handshake](https://wiki.vg/Protocol#Handshake) packet.
     ///
     /// # Fields
     /// `protocol_version` is the protocol version of the client. See [wiki.vg](https://wiki.vg/Protocol_version_numbers) for more

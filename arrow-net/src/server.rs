@@ -5,15 +5,16 @@ use uuid::Uuid;
 
 use crate::player::Player;
 
-pub static SERVER: RwLock<Server> = RwLock::const_new(Server::new());
+pub static SERVER: RwLock<Server> = RwLock::const_new(Server::new(100));
 
 pub struct Server {
     players: Vec<Arc<RwLock<Player>>>,
+    max_player_count: i32,
 }
 
 impl Server {
-    pub const fn new() -> Self {
-        Self { players: vec![] }
+    pub const fn new(max_player_count: i32) -> Self {
+        Self { players: vec![], max_player_count }
     }
 
     pub fn add_player(&mut self, player: Arc<RwLock<Player>>) {
@@ -32,6 +33,14 @@ impl Server {
         if idx != usize::MAX {
             self.players.remove(idx);
         }
+    }
+
+    pub async fn get_max_online_player_count(&self) -> i32 {
+        self.max_player_count
+    }
+
+    pub async fn get_online_player_count(&self) -> usize {
+        self.players.len()
     }
 
     pub async fn has_uuid(&self, uuid: &Uuid) -> bool {

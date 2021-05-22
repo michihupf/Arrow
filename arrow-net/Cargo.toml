@@ -1,7 +1,7 @@
 [package]
 name = "arrow-net"
 version = "0.1.0"
-authors = ["GreatGodOfFire <greatgodoffire@protonmail.com>"]
+authors = ["GreatGodOfFire <greatgodoffire@protonmail.com>", "michihupf <michihupf@protonmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -15,4 +15,3 @@ arrow-codec = { path = "../arrow-codec" }
 futures = "0.3"
 log = "0.4"
 uuid = { version = "0.8", features = ["serde", "v3"] }
-
