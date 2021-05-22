@@ -12,7 +12,7 @@ pub enum PacketError {
     /// Returned when the id is unknown for the current status.
     InvalidPacketId(i32, State),
     /// Returned when converting to a json string fails
-    BuildingJsonFailed(),
+    BuildingJsonFailed,
 }
 
 impl From<SerdeError> for PacketError {
@@ -30,7 +30,7 @@ impl Display for PacketError {
             Self::InvalidPacketId(id, state) => {
                 write!(f, "Invalid id {:02x} in state {:?}", id, state)
             }
-            Self::BuildingJsonFailed() => {
+            Self::BuildingJsonFailed => {
                 write!(f, "Building json string failed")
             }
         }
