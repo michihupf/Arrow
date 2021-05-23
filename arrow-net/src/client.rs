@@ -78,7 +78,7 @@ impl Client {
                     }
                     | PacketKind::LoginStart(_)
                     | PacketKind::LoginSuccess(_, _)
-                    | PacketKind::StatusRequest()
+                    | PacketKind::StatusRequest
                     | PacketKind::StatusResponse(_)
                     | PacketKind::StatusPing(_)
                     | PacketKind::StatusPong(_) => {
@@ -97,7 +97,7 @@ impl Client {
 
     async fn status(mut self) {
         match next_packet!(self) {
-            PacketKind::StatusRequest() => (),
+            PacketKind::StatusRequest => {},
             p => {
                 error!("Unexpected packet {}, expected StatusRequest.", p);
                 return;

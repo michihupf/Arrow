@@ -5,7 +5,7 @@ use serde::ser::{
 
 use super::{
     error::SerdeError,
-    varint::{write_varint, VarInt},
+    varint::write_varint,
 };
 
 /// A [`serde::Serializer`] trait implementation for serializing minecraft packets.
