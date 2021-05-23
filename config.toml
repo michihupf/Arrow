@@ -1,0 +1,7 @@
+port = 25565
+host = "0.0.0.0"
+motd = "Arrow - A minecraft server written in Rust"
+
+[version_range]
+start = 47
+end = 754

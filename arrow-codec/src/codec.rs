@@ -1,9 +1,6 @@
 use arrow_protocol::{
     packets::{error::PacketError, Packet, PacketKind, State},
-    serde::{
-        error::SerdeError,
-        varint::{read_varint, varint_len, write_varint},
-    },
+    serde::varint::{varint_len, write_varint},
 };
 use bytes::{Buf, BytesMut};
 use tokio_util::codec::{Decoder, Encoder};
