@@ -1,4 +1,5 @@
 mod log;
+mod config;
 
 #[tokio::main]
 async fn main() {
@@ -6,5 +7,7 @@ async fn main() {
         panic!("Failed setting up logger: {}", e);
     }
 
-    arrow_net::start_server("0.0.0.0", 25565).await.unwrap();
+    let config = config::load_config().await;
+
+    arrow_net::start_server(config.host(), *config.port()).await.unwrap();
 }
