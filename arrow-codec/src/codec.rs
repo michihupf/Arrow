@@ -24,6 +24,11 @@ impl McCodec {
         }
     }
 
+    /// returns the protocol version of this McCodec
+    pub fn get_protocol_version(&self) -> i32 {
+        self.protocol_version
+    }
+
     fn read_varint(&self, src: &mut BytesMut) -> Result<Option<i32>, DecoderError> {
         let mut count = 0;
         let mut result = 0;

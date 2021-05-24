@@ -1,8 +1,20 @@
 use serde::{Deserialize, Serialize};
 
+/// Difficulty type
+#[derive(Serialize, Deserialize)]
+pub enum Difficulty {
+    /// peaceful difficulty
+    Peaceful = 0,
+    /// easy difficulty
+    Easy = 1,
+    /// normal difficulty
+    Normal = 2,
+    /// hard difficulty
+    Hard = 3,
+}
+
 /// Gamemode type
-#[repr(i8)]
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize)]
 pub enum Gamemode {
     /// If no previous gamemode exists
     NoPreviousMode = -1,
@@ -17,7 +29,7 @@ pub enum Gamemode {
 }
 
 /// LevelType type
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize)]
 pub enum LevelType {
     /// default world
     Default,

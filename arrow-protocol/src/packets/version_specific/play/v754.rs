@@ -1,6 +1,5 @@
 /// All clientbound `play` packets for protocol versions 552 and above.
 pub mod clientbound {
-    use nbt::ser;
     use serde::{Deserialize, Serialize};
 
     use crate::serde::varint::VarInt;
