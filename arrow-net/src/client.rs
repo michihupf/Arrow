@@ -1,10 +1,21 @@
 use std::sync::Arc;
 
 use arrow_codec::codec::McCodec;
-use arrow_protocol::{packets::{PacketKind, common::status, types::{self, Gamemode}, version_specific::{self, types::v754::{
-            BiomeEffects, BiomeProperties, BiomeRegistry, BiomeRegistryEntry, DimensionCodec,
-            DimensionRegistry, DimensionRegistryEntry, DimensionType,
-        }}}, serde::varint::VarInt};
+use arrow_protocol::{
+    packets::{
+        common::status,
+        types::{self, Gamemode},
+        version_specific::{
+            self,
+            types::v754::{
+                BiomeEffects, BiomeProperties, BiomeRegistry, BiomeRegistryEntry, DimensionCodec,
+                DimensionRegistry, DimensionRegistryEntry, DimensionType,
+            },
+        },
+        PacketKind,
+    },
+    serde::varint::VarInt,
+};
 use futures::{SinkExt, StreamExt, TryStreamExt};
 use log::{error, info};
 use tokio::{net::TcpStream, sync::RwLock};

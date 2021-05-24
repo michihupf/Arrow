@@ -12,7 +12,12 @@ use std::fmt::Display;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use self::{common::*, error::PacketError, types::{Difficulty, Gamemode, LevelType}, version_specific::{play::v754::clientbound::JoinGame, types::v47::Dimension}};
+use self::{
+    common::*,
+    error::PacketError,
+    types::{Difficulty, Gamemode, LevelType},
+    version_specific::{play::v754::clientbound::JoinGame, types::v47::Dimension},
+};
 use crate::serde::{de::Deserializer, varint::VarInt};
 
 /// A trait giving functions to get the packet id and serialize it.
@@ -208,7 +213,7 @@ impl PacketKind {
                             view_distance,
                             reduced_debug_info,
                             enable_respawn_screen,
-                        )
+                        ),
                     ))
                 } else if protocol_version >= 468 {
                     Ok(Box::new(
@@ -220,7 +225,7 @@ impl PacketKind {
                             level_type,
                             view_distance,
                             reduced_debug_info,
-                        )
+                        ),
                     ))
                 } else if protocol_version >= 464 {
                     Ok(Box::new(
@@ -231,7 +236,7 @@ impl PacketKind {
                             max_players as u8,
                             level_type,
                             reduced_debug_info,
-                        )
+                        ),
                     ))
                 } else if protocol_version >= 108 {
                     Ok(Box::new(
@@ -243,7 +248,7 @@ impl PacketKind {
                             max_players as u8,
                             level_type,
                             reduced_debug_info,
-                        )
+                        ),
                     ))
                 } else {
                     Ok(Box::new(
@@ -255,7 +260,7 @@ impl PacketKind {
                             max_players as u8,
                             level_type,
                             reduced_debug_info,
-                        )
+                        ),
                     ))
                 }
             }
