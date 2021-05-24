@@ -2,7 +2,9 @@
 pub mod common;
 /// The error module for packets.
 pub mod error;
-/// All version specific packets.
+/// All common types used in packets
+pub mod types;
+/// All version specific packets and types.
 pub mod version_specific;
 
 use std::fmt::Display;
@@ -10,9 +12,8 @@ use std::fmt::Display;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use self::{common::*, error::PacketError};
-use crate::serde::de::Deserializer;
-use self::version_specific::*;
+use self::{common::*, error::PacketError, types::Gamemode};
+use crate::serde::{de::Deserializer, varint::VarInt};
 
 /// A trait giving functions to get the packet id and serialize it.
 pub trait Packet {
@@ -29,7 +30,6 @@ pub trait Packet {
 }
 
 /// A multi-version representation for packets.
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PacketKind {
     /// The [Handshake](https://wiki.vg/Protocol#Handshake) packet.
     Handshake {
@@ -54,6 +54,41 @@ pub enum PacketKind {
     StatusPing(i64),
     /// The [Pong](https://wiki.vg/Protocol#Status) packet
     StatusPong(i64),
+    /// The [JoinGame](https://wiki.vg/Protocol#Join_Game) packet
+    JoinGame {
+        /// This is the player's Entity ID (EID).
+        entity_id: i32,
+        /// True if the servers difficulty is hardcore
+        is_hardcore: bool,
+        /// 0: survival, 1: creative, 2: adventure, 3: spectator.
+        gamemode: Gamemode,
+        /// 0: survival, 1: creative, 2: adventure, 3: spectator. The hardcore flag is not included. The previous gamemode.
+        previous_gamemode: Gamemode,
+        /// Specifies how many worlds are present on the server
+        world_count: VarInt,
+        /// Identifiers for all worlds on the server
+        world_names: Vec<String>,
+        /// The full extent of these is still unknown, but the tag represents a dimension and biome registry. See below for the vanilla default.
+        dimension_codec: Vec<u8>,
+        /// Valid dimensions are defined per dimension registry sent before this
+        dimension: Vec<u8>,
+        /// Name of the world being spawned into
+        world_name: String,
+        /// First 8 bytes of the SHA-256 hash of the world's seed. Used client side for biome noise
+        hashed_seed: i64,
+        /// Name of the world being spawned into.
+        max_players: VarInt,
+        /// Render distance (2-32).
+        view_distance: VarInt,
+        /// If true, a Notchian client shows reduced information on the debug screen. For servers in development, this should almost always be false.
+        reduced_debug_info: bool,
+        /// Set to false when the doImmediateRespawn gamerule is true.
+        enable_respawn_screen: bool,
+        /// True if the world is a debug mode world; debug mode worlds cannot be modified and have predefined blocks
+        is_debug: bool,
+        /// True if the world is a superflat world; flat worlds have different void fog and a horizon at y=0 instead of y=63
+        is_flat: bool,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -89,11 +124,20 @@ impl PacketKind {
                 port,
                 next_state,
             ))),
-            LoginStart(name) => Ok(Box::new(login::serverbound::LoginStart::new(name))),
-            LoginSuccess(uuid, name) => if protocol_version >= 707 {
-                Ok(Box::new(v707::login::clientbound::LoginSuccess::new(uuid, name)))
-            } else {
-                Ok(Box::new(v47::login::clientbound::LoginSuccess::new(uuid.to_hyphenated().to_string(), name)))
+            LoginStart(name) => Ok(Box::new(common::login::serverbound::LoginStart::new(name))),
+            LoginSuccess(uuid, name) => {
+                if protocol_version >= 707 {
+                    Ok(Box::new(
+                        version_specific::login::v707::clientbound::LoginSuccess::new(uuid, name),
+                    ))
+                } else {
+                    Ok(Box::new(
+                        version_specific::login::v47::clientbound::LoginSuccess::new(
+                            uuid.to_hyphenated().to_string(),
+                            name,
+                        ),
+                    ))
+                }
             }
             StatusRequest => Ok(Box::new(common::status::serverbound::Request::new())),
             StatusResponse(json_response) => Ok(Box::new(
@@ -104,6 +148,49 @@ impl PacketKind {
             )),
             StatusPing(payload) => Ok(Box::new(common::status::serverbound::Ping::new(payload))),
             StatusPong(payload) => Ok(Box::new(common::status::clientbound::Pong::new(payload))),
+            JoinGame {
+                entity_id,
+                is_hardcore,
+                gamemode,
+                previous_gamemode,
+                world_count,
+                world_names,
+                dimension_codec,
+                dimension,
+                world_name,
+                hashed_seed,
+                max_players,
+                view_distance,
+                reduced_debug_info,
+                enable_respawn_screen,
+                is_debug,
+                is_flat,
+            } => {
+                if protocol_version >= 754 {
+                    Ok(Box::new(
+                        version_specific::play::v754::clientbound::JoinGame::new(
+                            entity_id,
+                            is_hardcore,
+                            gamemode as u8,
+                            previous_gamemode as i8,
+                            world_count,
+                            world_names,
+                            dimension_codec,
+                            dimension,
+                            world_name,
+                            hashed_seed,
+                            max_players,
+                            view_distance,
+                            reduced_debug_info,
+                            enable_respawn_screen,
+                            is_debug,
+                            is_flat,
+                        ),
+                    ))
+                } else {
+                    todo!()
+                }
+            }
         }
     }
 
@@ -177,6 +264,24 @@ impl Display for PacketKind {
             StatusResponse(_) => write!(f, "StatusResponse"),
             StatusPing(_) => write!(f, "StatusPing"),
             StatusPong(_) => write!(f, "StatusPong"),
+            JoinGame {
+                entity_id: _,
+                is_hardcore: _,
+                gamemode: _,
+                previous_gamemode: _,
+                world_count: _,
+                world_names: _,
+                dimension_codec: _,
+                dimension: _,
+                world_name: _,
+                hashed_seed: _,
+                max_players: _,
+                view_distance: _,
+                reduced_debug_info: _,
+                enable_respawn_screen: _,
+                is_debug: _,
+                is_flat: _,
+            } => write!(f, "JoinGame"),
         }
     }
 }

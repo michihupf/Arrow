@@ -21,6 +21,10 @@ impl Server {
     }
 
     pub fn add_player(&mut self, player: Arc<RwLock<Player>>) {
+        let player_clone = player.clone();
+        tokio::spawn(async move {
+            player_clone.write().await.client_mut().join().await;
+        });
         self.players.push(player);
     }
 
@@ -38,12 +42,12 @@ impl Server {
         }
     }
 
-    pub async fn get_max_online_player_count(&self) -> i32 {
+    pub fn get_max_online_player_count(&self) -> i32 {
         self.max_player_count
     }
 
-    pub async fn get_online_player_count(&self) -> usize {
-        self.players.len()
+    pub fn get_online_player_count(&self) -> i32 {
+        self.players.len() as i32
     }
 
     pub async fn has_uuid(&self, uuid: &Uuid) -> bool {

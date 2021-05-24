@@ -3,10 +3,7 @@ use serde::ser::{
     SerializeTupleStruct, SerializeTupleVariant,
 };
 
-use super::{
-    error::SerdeError,
-    varint::write_varint,
-};
+use super::{error::SerdeError, varint::write_varint};
 
 /// A [`serde::Serializer`] trait implementation for serializing minecraft packets.
 pub struct Serializer {
@@ -74,8 +71,10 @@ impl<'a> serde::Serializer for &'a mut Serializer {
         Ok(())
     }
 
-    fn serialize_u8(self, _v: u8) -> Result<Self::Ok, Self::Error> {
-        todo!()
+    fn serialize_u8(self, v: u8) -> Result<Self::Ok, Self::Error> {
+        self.output.push(v);
+
+        Ok(())
     }
 
     fn serialize_u16(self, v: u16) -> Result<Self::Ok, Self::Error> {
