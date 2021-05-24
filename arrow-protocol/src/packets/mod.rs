@@ -12,7 +12,12 @@ use std::fmt::Display;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use self::{common::*, error::PacketError, types::Gamemode};
+use self::{
+    common::*,
+    error::PacketError,
+    types::{Difficulty, Gamemode, LevelType},
+    version_specific::{play::v754::clientbound::JoinGame, types::v47::Dimension},
+};
 use crate::serde::{de::Deserializer, varint::VarInt};
 
 /// A trait giving functions to get the packet id and serialize it.
@@ -72,12 +77,18 @@ pub enum PacketKind {
         dimension_codec: Vec<u8>,
         /// Valid dimensions are defined per dimension registry sent before this
         dimension: Vec<u8>,
+        /// Dimension is defined here
+        dimension_47: Dimension,
+        /// The difficulty of the server
+        difficulty: Difficulty,
         /// Name of the world being spawned into
         world_name: String,
         /// First 8 bytes of the SHA-256 hash of the world's seed. Used client side for biome noise
         hashed_seed: i64,
         /// Name of the world being spawned into.
-        max_players: VarInt,
+        max_players: i32,
+        /// Level type specified here: default, flat, largeBiomes, amplified, customized, buffet, default_1_1
+        level_type: LevelType,
         /// Render distance (2-32).
         view_distance: VarInt,
         /// If true, a Notchian client shows reduced information on the debug screen. For servers in development, this should almost always be false.
@@ -157,9 +168,12 @@ impl PacketKind {
                 world_names,
                 dimension_codec,
                 dimension,
+                dimension_47,
+                difficulty,
                 world_name,
                 hashed_seed,
                 max_players,
+                level_type,
                 view_distance,
                 reduced_debug_info,
                 enable_respawn_screen,
@@ -179,7 +193,7 @@ impl PacketKind {
                             dimension,
                             world_name,
                             hashed_seed,
-                            max_players,
+                            VarInt(max_players),
                             view_distance,
                             reduced_debug_info,
                             enable_respawn_screen,
@@ -187,8 +201,67 @@ impl PacketKind {
                             is_flat,
                         ),
                     ))
+                } else if protocol_version >= 522 {
+                    Ok(Box::new(
+                        version_specific::play::v552::clientbound::JoinGame::new(
+                            entity_id,
+                            gamemode as u8 | ((is_hardcore as u8) << 3),
+                            dimension_47 as i32,
+                            hashed_seed,
+                            max_players as u8,
+                            level_type,
+                            view_distance,
+                            reduced_debug_info,
+                            enable_respawn_screen,
+                        ),
+                    ))
+                } else if protocol_version >= 468 {
+                    Ok(Box::new(
+                        version_specific::play::v468::clientbound::JoinGame::new(
+                            entity_id,
+                            gamemode as u8 | ((is_hardcore as u8) << 3),
+                            dimension_47 as i32,
+                            max_players as u8,
+                            level_type,
+                            view_distance,
+                            reduced_debug_info,
+                        ),
+                    ))
+                } else if protocol_version >= 464 {
+                    Ok(Box::new(
+                        version_specific::play::v464::clientbound::JoinGame::new(
+                            entity_id,
+                            gamemode as u8 | ((is_hardcore as u8) << 3),
+                            dimension_47 as i32,
+                            max_players as u8,
+                            level_type,
+                            reduced_debug_info,
+                        ),
+                    ))
+                } else if protocol_version >= 108 {
+                    Ok(Box::new(
+                        version_specific::play::v108::clientbound::JoinGame::new(
+                            entity_id,
+                            gamemode as u8 | ((is_hardcore as u8) << 3),
+                            dimension_47 as i32,
+                            difficulty as u8,
+                            max_players as u8,
+                            level_type,
+                            reduced_debug_info,
+                        ),
+                    ))
                 } else {
-                    todo!()
+                    Ok(Box::new(
+                        version_specific::play::v47::clientbound::JoinGame::new(
+                            entity_id,
+                            gamemode as u8 | ((is_hardcore as u8) << 3),
+                            dimension_47 as i8,
+                            difficulty as u8,
+                            max_players as u8,
+                            level_type,
+                            reduced_debug_info,
+                        ),
+                    ))
                 }
             }
         }
@@ -273,9 +346,12 @@ impl Display for PacketKind {
                 world_names: _,
                 dimension_codec: _,
                 dimension: _,
+                dimension_47: _,
+                difficulty: _,
                 world_name: _,
                 hashed_seed: _,
                 max_players: _,
+                level_type: _,
                 view_distance: _,
                 reduced_debug_info: _,
                 enable_respawn_screen: _,

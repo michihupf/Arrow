@@ -1,4 +1,4 @@
-/// All clientbound `play` packets for protocol versions 552 and above.
+/// All clientbound `play` packets for protocol versions 468 and above.
 pub mod clientbound {
     use serde::{Deserialize, Serialize};
 
@@ -9,7 +9,7 @@ pub mod clientbound {
         serde::ser::Serializer,
     };
 
-    /// The [JoinGame](https://wiki.vg/index.php?title=Pre-release_protocol&oldid=14970#Join_Game) packet for version 552 or higher.
+    /// The [JoinGame](https://wiki.vg/index.php?title=Pre-release_protocol&oldid=14639#Join_Game) packet for version 468 or higher.
     #[derive(Serialize, Deserialize)]
     pub struct JoinGame {
         /// This is the player's Entity ID (EID).
@@ -18,8 +18,6 @@ pub mod clientbound {
         pub gamemode: u8,
         /// -1: Nether, 0: Overworld, 1: End; also, note that this is not a VarInt but instead a regular int.
         pub dimension: i32,
-        /// First 8 bytes of the SHA-256 hash of the world's seed. Used client side for biome noise
-        pub hashed_seed: i64,
         /// Name of the world being spawned into.
         pub max_players: u8,
         /// default, flat, largeBiomes, amplified, customized, buffet, default_1_1
@@ -28,8 +26,6 @@ pub mod clientbound {
         pub view_distance: VarInt,
         /// If true, a Notchian client shows reduced information on the debug screen. For servers in development, this should almost always be false.
         pub reduced_debug_info: bool,
-        /// Set to false when the doImmediateRespawn gamerule is true.
-        pub enable_respawn_screen: bool,
     }
 
     impl JoinGame {
@@ -38,33 +34,33 @@ pub mod clientbound {
             entity_id: i32,
             gamemode: u8,
             dimension: i32,
-            hashed_seed: i64,
             max_players: u8,
             level_type: LevelType,
             view_distance: VarInt,
             reduced_debug_info: bool,
-            enable_respawn_screen: bool,
         ) -> Self {
             Self {
                 entity_id,
                 gamemode,
                 dimension,
-                hashed_seed,
                 max_players,
                 level_type: level_type.to_string(),
                 view_distance,
                 reduced_debug_info,
-                enable_respawn_screen,
             }
         }
     }
 
     impl Packet for JoinGame {
-        fn id(_: i32) -> i32
+        fn id(version: i32) -> i32
         where
             Self: Sized,
         {
-            0x26
+            if version >= 550 {
+                0x26
+            } else {
+                0x25
+            }
         }
 
         fn data_bytes(&self) -> Result<Vec<u8>, PacketError> {

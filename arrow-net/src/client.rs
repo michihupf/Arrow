@@ -4,10 +4,13 @@ use arrow_codec::codec::McCodec;
 use arrow_protocol::{
     packets::{
         common::status,
-        types::Gamemode,
-        version_specific::types::v754::{
-            BiomeEffects, BiomeProperties, BiomeRegistry, BiomeRegistryEntry, DimensionCodec,
-            DimensionRegistry, DimensionRegistryEntry, DimensionType,
+        types::{self, Gamemode},
+        version_specific::{
+            self,
+            types::v754::{
+                BiomeEffects, BiomeProperties, BiomeRegistry, BiomeRegistryEntry, DimensionCodec,
+                DimensionRegistry, DimensionRegistryEntry, DimensionType,
+            },
         },
         PacketKind,
     },
@@ -77,6 +80,11 @@ impl Client {
         };
     }
 
+    /// Returns the protocol version for this client
+    pub fn get_protocol_version(&self) -> i32 {
+        self.framed.codec().get_protocol_version()
+    }
+
     pub(crate) async fn recv(&mut self) {
         loop {
             match self.framed.try_next().await {
@@ -102,9 +110,12 @@ impl Client {
                         world_names: _,
                         dimension_codec: _,
                         dimension: _,
+                        dimension_47: _,
+                        difficulty: _,
                         world_name: _,
                         hashed_seed: _,
                         max_players: _,
+                        level_type: _,
                         view_distance: _,
                         reduced_debug_info: _,
                         enable_respawn_screen: _,
@@ -136,8 +147,8 @@ impl Client {
 
         let response_data = status::ResponseData {
             version: status::VersionData {
-                name: String::from("1.16.5"),
-                protocol: 754,
+                name: String::from("1.8 - 1.16"),
+                protocol: self.get_protocol_version(),
             },
             players: status::PlayerData {
                 max: SERVER.read().await.get_max_online_player_count(),
@@ -317,9 +328,12 @@ impl Client {
             world_names: vec![String::from("world")],
             dimension_codec: dimension_codec.get_bytes(),
             dimension: dimension.get_bytes(),
+            dimension_47: version_specific::types::v47::Dimension::Overworld,
+            difficulty: types::Difficulty::Peaceful,
             world_name: String::from("world"),
             // SERVER.read().await.get_max_online_player_count()
-            max_players: VarInt(SERVER.read().await.get_max_online_player_count()),
+            max_players: SERVER.read().await.get_max_online_player_count(),
+            level_type: types::LevelType::Default,
             view_distance: VarInt(8),
             hashed_seed: 0x6B51D431DF5D7F14,
             reduced_debug_info: false,
