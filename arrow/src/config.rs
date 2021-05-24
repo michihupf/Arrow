@@ -2,7 +2,7 @@ use std::{io::ErrorKind, ops::RangeInclusive};
 use tokio::fs::{read_to_string, write};
 
 use log::{error, info, warn};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
@@ -57,7 +57,7 @@ pub async fn load_config() -> Config {
             };
 
             return Config::default();
-        },
+        }
         Err(e) => {
             error!("Failed reading config file: {}", e);
             return Config::default();

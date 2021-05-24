@@ -1,5 +1,5 @@
-mod log;
 mod config;
+mod log;
 
 #[tokio::main]
 async fn main() {
@@ -9,5 +9,7 @@ async fn main() {
 
     let config = config::load_config().await;
 
-    arrow_net::start_server(config.host(), *config.port()).await.unwrap();
+    arrow_net::start_server(config.host(), *config.port())
+        .await
+        .unwrap();
 }

@@ -30,7 +30,7 @@ pub struct PlayerData {
     /// maximum number of players online
     pub max: i32,
     /// number of online players
-    pub online: usize,
+    pub online: i32,
     /// array of [SinglePlayerData]
     pub sample: Vec<SinglePlayerData>,
 }

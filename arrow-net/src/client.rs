@@ -1,7 +1,18 @@
 use std::sync::Arc;
 
 use arrow_codec::codec::McCodec;
-use arrow_protocol::packets::{common::status, PacketKind};
+use arrow_protocol::{
+    packets::{
+        common::status,
+        types::Gamemode,
+        version_specific::types::v754::{
+            BiomeEffects, BiomeProperties, BiomeRegistry, BiomeRegistryEntry, DimensionCodec,
+            DimensionRegistry, DimensionRegistryEntry, DimensionType,
+        },
+        PacketKind,
+    },
+    serde::varint::VarInt,
+};
 use futures::{SinkExt, StreamExt, TryStreamExt};
 use log::{error, info};
 use tokio::{net::TcpStream, sync::RwLock};
@@ -81,7 +92,25 @@ impl Client {
                     | PacketKind::StatusRequest
                     | PacketKind::StatusResponse(_)
                     | PacketKind::StatusPing(_)
-                    | PacketKind::StatusPong(_) => {
+                    | PacketKind::StatusPong(_)
+                    | PacketKind::JoinGame {
+                        entity_id: _,
+                        is_hardcore: _,
+                        gamemode: _,
+                        previous_gamemode: _,
+                        world_count: _,
+                        world_names: _,
+                        dimension_codec: _,
+                        dimension: _,
+                        world_name: _,
+                        hashed_seed: _,
+                        max_players: _,
+                        view_distance: _,
+                        reduced_debug_info: _,
+                        enable_respawn_screen: _,
+                        is_debug: _,
+                        is_flat: _,
+                    } => {
                         error!("Received packet from other protocol state: {}.", p);
                         return;
                     }
@@ -97,7 +126,7 @@ impl Client {
 
     async fn status(mut self) {
         match next_packet!(self) {
-            PacketKind::StatusRequest => {},
+            PacketKind::StatusRequest => {}
             p => {
                 error!("Unexpected packet {}, expected StatusRequest.", p);
                 return;
@@ -111,8 +140,8 @@ impl Client {
                 protocol: 754,
             },
             players: status::PlayerData {
-                max: SERVER.read().await.get_max_online_player_count().await,
-                online: SERVER.read().await.get_online_player_count().await,
+                max: SERVER.read().await.get_max_online_player_count(),
+                online: SERVER.read().await.get_online_player_count(),
                 sample: Vec::new(),
             },
             description: status::DescriptionData {
@@ -155,6 +184,151 @@ impl Client {
                 .await
                 .add_player(Arc::new(RwLock::new(Player::new(uuid, name, self))));
         }
+    }
+
+    ///
+    pub async fn join(&mut self) {
+        let dimension = DimensionType {
+            piglin_safe: false,
+            natural: true,
+            ambient_light: 1.0,
+            fixed_time: None,
+            infiniburn: String::from("minecraft:infiniburn_overworld"),
+            respawn_anchor_works: false,
+            has_skylight: true,
+            bed_works: true,
+            effects: String::from("minecraft:overworld"),
+            has_raids: false,
+            logical_height: 255,
+            coordinate_scale: 1.0,
+            ultrawarm: false,
+            has_ceiling: false,
+        };
+
+        let dimension_codec = DimensionCodec {
+            dimension_registry: DimensionRegistry {
+                dimension_type: String::from("minecraft:dimension_type"),
+                value: vec![
+                    DimensionRegistryEntry {
+                        name: String::from("minecraft:overworld"),
+                        id: 0,
+                        element: dimension.clone(),
+                    },
+                    DimensionRegistryEntry {
+                        name: String::from("minecraft:overworld_caves"),
+                        id: 1,
+                        element: DimensionType {
+                            piglin_safe: true,
+                            natural: true,
+                            ambient_light: 1.0,
+                            fixed_time: None,
+                            infiniburn: String::from("minecraft:infiniburn_overworld"),
+                            respawn_anchor_works: false,
+                            has_skylight: true,
+                            bed_works: true,
+                            effects: String::from("minecraft:overworld"),
+                            has_raids: false,
+                            logical_height: 255,
+                            coordinate_scale: 1.0,
+                            ultrawarm: false,
+                            has_ceiling: false,
+                        },
+                    },
+                    DimensionRegistryEntry {
+                        name: String::from("minecraft:the_nether"),
+                        id: 2,
+                        element: DimensionType {
+                            piglin_safe: true,
+                            natural: true,
+                            ambient_light: 0.0,
+                            fixed_time: None,
+                            infiniburn: String::from("minecraft:infiniburn_nether"),
+                            respawn_anchor_works: false,
+                            has_skylight: true,
+                            bed_works: true,
+                            effects: String::from("minecraft:the_nether"),
+                            has_raids: false,
+                            logical_height: 255,
+                            coordinate_scale: 1.0,
+                            ultrawarm: false,
+                            has_ceiling: false,
+                        },
+                    },
+                    DimensionRegistryEntry {
+                        name: String::from("minecraft:the_end"),
+                        id: 3,
+                        element: DimensionType {
+                            piglin_safe: true,
+                            natural: true,
+                            ambient_light: 0.1,
+                            fixed_time: None,
+                            infiniburn: String::from("minecraft:infiniburn_end"),
+                            respawn_anchor_works: false,
+                            has_skylight: true,
+                            bed_works: true,
+                            effects: String::from("minecraft:the_end"),
+                            has_raids: false,
+                            logical_height: 255,
+                            coordinate_scale: 1.0,
+                            ultrawarm: false,
+                            has_ceiling: false,
+                        },
+                    },
+                ],
+            },
+            biome_registry: BiomeRegistry {
+                biome_type: String::from("minecraft:worldgen/biome"),
+                value: vec![BiomeRegistryEntry {
+                    name: String::from("minecraft:plains"),
+                    id: 1,
+                    element: BiomeProperties {
+                        precipitation: String::from("rain"),
+                        depth: -1.0,
+                        temperature: 0.5,
+                        scale: 0.1,
+                        downfall: 0.5,
+                        category: String::from("plains"),
+                        temperature_modifier: None,
+                        effects: BiomeEffects {
+                            sky_color: 8103167,
+                            water_fog_color: 329011,
+                            fog_color: 12638463,
+                            water_color: 4159204,
+                            foilage_color: None,
+                            grass_color: None,
+                            grass_color_modifier: None,
+                            music: None,
+                            ambient_sound: None,
+                            additions_sound: None,
+                            mood_sound: None,
+                        },
+                        particle: None,
+                    },
+                }],
+            },
+        };
+
+        let packet = PacketKind::JoinGame {
+            entity_id: 0,
+            is_hardcore: false,
+            gamemode: Gamemode::Survival,
+            previous_gamemode: Gamemode::NoPreviousMode,
+            world_count: VarInt(1),
+            world_names: vec![String::from("world")],
+            dimension_codec: dimension_codec.get_bytes(),
+            dimension: dimension.get_bytes(),
+            world_name: String::from("world"),
+            // SERVER.read().await.get_max_online_player_count()
+            max_players: VarInt(SERVER.read().await.get_max_online_player_count()),
+            view_distance: VarInt(8),
+            hashed_seed: 0x6B51D431DF5D7F14,
+            reduced_debug_info: false,
+            enable_respawn_screen: true,
+            is_debug: true,
+            is_flat: false,
+        };
+
+        send_packet!(self packet);
     }
 
     async fn next_packet(&mut self) -> Result<PacketKind, NetError> {
