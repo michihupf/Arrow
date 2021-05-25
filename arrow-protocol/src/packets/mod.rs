@@ -12,7 +12,7 @@ use std::fmt::Display;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use self::{common::*, error::PacketError, types::Gamemode};
+use self::{common::*, error::PacketError, types::Gamemode, version_specific::types::v754::{DimensionCodec, DimensionType}};
 use crate::serde::{de::Deserializer, varint::VarInt};
 
 /// A trait giving functions to get the packet id and serialize it.
@@ -64,14 +64,12 @@ pub enum PacketKind {
         gamemode: Gamemode,
         /// 0: survival, 1: creative, 2: adventure, 3: spectator. The hardcore flag is not included. The previous gamemode.
         previous_gamemode: Gamemode,
-        /// Specifies how many worlds are present on the server
-        world_count: VarInt,
         /// Identifiers for all worlds on the server
         world_names: Vec<String>,
         /// The full extent of these is still unknown, but the tag represents a dimension and biome registry. See below for the vanilla default.
-        dimension_codec: Vec<u8>,
+        dimension_codec: DimensionCodec,
         /// Valid dimensions are defined per dimension registry sent before this
-        dimension: Vec<u8>,
+        dimension: DimensionType,
         /// Name of the world being spawned into
         world_name: String,
         /// First 8 bytes of the SHA-256 hash of the world's seed. Used client side for biome noise
@@ -153,7 +151,6 @@ impl PacketKind {
                 is_hardcore,
                 gamemode,
                 previous_gamemode,
-                world_count,
                 world_names,
                 dimension_codec,
                 dimension,
@@ -173,7 +170,6 @@ impl PacketKind {
                             is_hardcore,
                             gamemode as u8,
                             previous_gamemode as i8,
-                            world_count,
                             world_names,
                             dimension_codec,
                             dimension,
@@ -259,29 +255,12 @@ impl Display for PacketKind {
                 next_state: _,
             } => write!(f, "Handshake"),
             LoginStart(_) => write!(f, "LoginStart"),
-            LoginSuccess(_, _) => write!(f, "LoginSuccess"),
+            LoginSuccess(..) => write!(f, "LoginSuccess"),
             StatusRequest => write!(f, "StatusRequest"),
             StatusResponse(_) => write!(f, "StatusResponse"),
             StatusPing(_) => write!(f, "StatusPing"),
             StatusPong(_) => write!(f, "StatusPong"),
-            JoinGame {
-                entity_id: _,
-                is_hardcore: _,
-                gamemode: _,
-                previous_gamemode: _,
-                world_count: _,
-                world_names: _,
-                dimension_codec: _,
-                dimension: _,
-                world_name: _,
-                hashed_seed: _,
-                max_players: _,
-                view_distance: _,
-                reduced_debug_info: _,
-                enable_respawn_screen: _,
-                is_debug: _,
-                is_flat: _,
-            } => write!(f, "JoinGame"),
+            JoinGame { .. } => write!(f, "JoinGame"),
         }
     }
 }
