@@ -149,7 +149,7 @@ impl<'a> serde::Serializer for &'a mut Serializer {
         _variant_index: u32,
         _variant: &'static str,
     ) -> Result<Self::Ok, Self::Error> {
-        todo!()
+        Ok(())
     }
 
     fn serialize_newtype_struct<T: ?Sized>(
