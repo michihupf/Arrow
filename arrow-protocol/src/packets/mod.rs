@@ -12,7 +12,12 @@ use std::fmt::Display;
 use serde::Deserialize;
 use uuid::Uuid;
 
-use self::{common::*, error::PacketError, types::Gamemode, version_specific::types::v754::{DimensionCodec, DimensionType}};
+use self::{
+    common::*,
+    error::PacketError,
+    types::Gamemode,
+    version_specific::types::v754::{DimensionCodec, DimensionType},
+};
 use crate::serde::{de::Deserializer, varint::VarInt};
 
 /// A trait giving functions to get the packet id and serialize it.

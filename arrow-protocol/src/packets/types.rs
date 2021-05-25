@@ -4,7 +4,11 @@ use std::{
 };
 
 use nbt::{de::Decoder, to_writer};
-use serde::{Deserialize, Serialize, de::{SeqAccess, Visitor}, ser::SerializeSeq};
+use serde::{
+    de::{SeqAccess, Visitor},
+    ser::SerializeSeq,
+    Deserialize, Serialize,
+};
 
 use crate::serde::varint::{read_varint, write_varint};
 
@@ -99,7 +103,7 @@ impl<'a, 'de: 'a, T: Serialize + Deserialize<'de>> Visitor<'de> for NbtVisitor<'
     type Value = Nbt<'a, T>;
 
     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-       formatter.write_str("expected seq")
+        formatter.write_str("expected seq")
     }
 
     fn visit_seq<A>(self, seq: A) -> Result<Self::Value, A::Error>
@@ -145,11 +149,13 @@ impl<'a, 'de: 'a, T: Serialize + Deserialize<'de>> Deserialize<'de> for LengthPr
     }
 }
 
-impl<'a, 'de: 'a, T: Serialize + Deserialize<'de>> Visitor<'de> for LengthPrefixedVecVisitor<'a, T> {
+impl<'a, 'de: 'a, T: Serialize + Deserialize<'de>> Visitor<'de>
+    for LengthPrefixedVecVisitor<'a, T>
+{
     type Value = LengthPrefixedVec<'a, T>;
 
     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-       formatter.write_str("expected seq")
+        formatter.write_str("expected seq")
     }
 
     fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>

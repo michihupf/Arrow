@@ -2,10 +2,16 @@
 pub mod clientbound {
     use serde::{Deserialize, Serialize};
 
-    use crate::{packets::{types::{LengthPrefixedVec, Nbt}, version_specific::types::v754::{DimensionCodec, DimensionType}}, serde::varint::VarInt};
     use crate::{
         packets::{error::PacketError, Packet},
         serde::ser::Serializer,
+    };
+    use crate::{
+        packets::{
+            types::{LengthPrefixedVec, Nbt},
+            version_specific::types::v754::{DimensionCodec, DimensionType},
+        },
+        serde::varint::VarInt,
     };
 
     /// The [JoinGame](https://wiki.vg/Protocol#Join_Game) packet for version 754 or higher.
