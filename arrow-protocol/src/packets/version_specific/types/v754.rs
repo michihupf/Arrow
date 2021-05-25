@@ -11,15 +11,6 @@ pub struct DimensionCodec {
     pub biome_registry: BiomeRegistry,
 }
 
-impl DimensionCodec {
-    ///
-    pub fn get_bytes(self) -> Vec<u8> {
-        let mut vec: Vec<u8> = Vec::new();
-        to_writer(&mut vec, &self, None);
-        vec
-    }
-}
-
 ///
 #[allow(missing_docs)]
 #[derive(Serialize, Deserialize, Clone)]
@@ -56,14 +47,6 @@ pub struct DimensionType {
     pub has_ceiling: bool,
 }
 
-impl DimensionType {
-    ///
-    pub fn get_bytes(self) -> Vec<u8> {
-        let mut vec = Vec::new();
-        to_writer(&mut vec, &self, None);
-        vec
-    }
-}
 ///
 #[allow(missing_docs)]
 #[derive(Serialize, Deserialize, Clone)]

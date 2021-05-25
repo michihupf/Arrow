@@ -16,7 +16,7 @@ use self::{
     common::*,
     error::PacketError,
     types::{Difficulty, Gamemode, LevelType},
-    version_specific::{play::v754::clientbound::JoinGame, types::v47::Dimension},
+    version_specific::{play::v754::clientbound::JoinGame, types::{v47::Dimension, v754::{DimensionCodec, DimensionType}}},
 };
 use crate::serde::{de::Deserializer, varint::VarInt};
 
@@ -69,14 +69,12 @@ pub enum PacketKind {
         gamemode: Gamemode,
         /// 0: survival, 1: creative, 2: adventure, 3: spectator. The hardcore flag is not included. The previous gamemode.
         previous_gamemode: Gamemode,
-        /// Specifies how many worlds are present on the server
-        world_count: VarInt,
         /// Identifiers for all worlds on the server
         world_names: Vec<String>,
         /// The full extent of these is still unknown, but the tag represents a dimension and biome registry. See below for the vanilla default.
-        dimension_codec: Vec<u8>,
+        dimension_codec: DimensionCodec,
         /// Valid dimensions are defined per dimension registry sent before this
-        dimension: Vec<u8>,
+        dimension: DimensionType,
         /// Dimension is defined here
         dimension_47: Dimension,
         /// The difficulty of the server
@@ -164,7 +162,6 @@ impl PacketKind {
                 is_hardcore,
                 gamemode,
                 previous_gamemode,
-                world_count,
                 world_names,
                 dimension_codec,
                 dimension,
@@ -187,7 +184,6 @@ impl PacketKind {
                             is_hardcore,
                             gamemode as u8,
                             previous_gamemode as i8,
-                            world_count,
                             world_names,
                             dimension_codec,
                             dimension,
@@ -332,32 +328,12 @@ impl Display for PacketKind {
                 next_state: _,
             } => write!(f, "Handshake"),
             LoginStart(_) => write!(f, "LoginStart"),
-            LoginSuccess(_, _) => write!(f, "LoginSuccess"),
+            LoginSuccess(..) => write!(f, "LoginSuccess"),
             StatusRequest => write!(f, "StatusRequest"),
             StatusResponse(_) => write!(f, "StatusResponse"),
             StatusPing(_) => write!(f, "StatusPing"),
             StatusPong(_) => write!(f, "StatusPong"),
-            JoinGame {
-                entity_id: _,
-                is_hardcore: _,
-                gamemode: _,
-                previous_gamemode: _,
-                world_count: _,
-                world_names: _,
-                dimension_codec: _,
-                dimension: _,
-                dimension_47: _,
-                difficulty: _,
-                world_name: _,
-                hashed_seed: _,
-                max_players: _,
-                level_type: _,
-                view_distance: _,
-                reduced_debug_info: _,
-                enable_respawn_screen: _,
-                is_debug: _,
-                is_flat: _,
-            } => write!(f, "JoinGame"),
+            JoinGame { .. } => write!(f, "JoinGame"),
         }
     }
 }

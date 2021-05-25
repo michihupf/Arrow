@@ -177,12 +177,6 @@ impl<'a> serde::Serializer for &'a mut Serializer {
     }
 
     fn serialize_seq(self, len: Option<usize>) -> Result<Self::SerializeSeq, Self::Error> {
-        if len.is_none() {
-            return Err(SerdeError::SerializeError(
-                "Can't serialize seq without length.".to_string(),
-            ));
-        }
-
         Ok(self)
     }
 
