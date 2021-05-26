@@ -101,26 +101,8 @@ impl Client {
                     | PacketKind::StatusResponse(_)
                     | PacketKind::StatusPing(_)
                     | PacketKind::StatusPong(_)
-                    | PacketKind::JoinGame {
-                        entity_id: _,
-                        is_hardcore: _,
-                        gamemode: _,
-                        previous_gamemode: _,
-                        world_names: _,
-                        dimension_codec: _,
-                        dimension: _,
-                        dimension_47: _,
-                        difficulty: _,
-                        world_name: _,
-                        hashed_seed: _,
-                        max_players: _,
-                        level_type: _,
-                        view_distance: _,
-                        reduced_debug_info: _,
-                        enable_respawn_screen: _,
-                        is_debug: _,
-                        is_flat: _,
-                    } => {
+                    | PacketKind::JoinGame { .. }
+                    | PacketKind::HeldItemChange(_) => {
                         error!("Received packet from other protocol state: {}.", p);
                         return;
                     }
@@ -196,7 +178,7 @@ impl Client {
         }
     }
 
-    ///
+    /// send the [JoinGame] Packet
     pub async fn join(&mut self) {
         let dimension = DimensionType {
             piglin_safe: false,
@@ -338,8 +320,12 @@ impl Client {
             is_debug: true,
             is_flat: false,
         };
-
         send_packet!(self packet);
+    }
+
+    /// set the players slot to `slot`
+    pub async fn set_slot(&mut self, slot: i8) {
+        send_packet!(self PacketKind::HeldItemChange(slot));
     }
 
     async fn next_packet(&mut self) -> Result<PacketKind, NetError> {
