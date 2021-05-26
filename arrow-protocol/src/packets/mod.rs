@@ -16,7 +16,7 @@ use self::{
     common::*,
     error::PacketError,
     types::{Difficulty, Gamemode, LevelType},
-    version_specific::{play::v754::clientbound::JoinGame, types::v47::Dimension},
+    version_specific::{types::v47::Dimension},
 };
 use crate::serde::{de::Deserializer, varint::VarInt};
 
@@ -100,6 +100,8 @@ pub enum PacketKind {
         /// True if the world is a superflat world; flat worlds have different void fog and a horizon at y=0 instead of y=63
         is_flat: bool,
     },
+    /// The [HeldItemChange](https://wiki.vg/Protocol#Held_Item_Change_.28clientbound.29) packet.
+    HeldItemChange(i8),
 }
 
 #[derive(Debug, Clone)]
@@ -263,7 +265,8 @@ impl PacketKind {
                         ),
                     ))
                 }
-            }
+            },
+            HeldItemChange(slot) => Ok(Box::new(common::play::clientbound::HeldItemChange::new(slot))),
         }
     }
 
@@ -337,27 +340,8 @@ impl Display for PacketKind {
             StatusResponse(_) => write!(f, "StatusResponse"),
             StatusPing(_) => write!(f, "StatusPing"),
             StatusPong(_) => write!(f, "StatusPong"),
-            JoinGame {
-                entity_id: _,
-                is_hardcore: _,
-                gamemode: _,
-                previous_gamemode: _,
-                world_count: _,
-                world_names: _,
-                dimension_codec: _,
-                dimension: _,
-                dimension_47: _,
-                difficulty: _,
-                world_name: _,
-                hashed_seed: _,
-                max_players: _,
-                level_type: _,
-                view_distance: _,
-                reduced_debug_info: _,
-                enable_respawn_screen: _,
-                is_debug: _,
-                is_flat: _,
-            } => write!(f, "JoinGame"),
+            JoinGame { .. } => write!(f, "JoinGame"),
+            HeldItemChange(_) => write!(f, "HeldItemChange"),
         }
     }
 }
