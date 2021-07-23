@@ -15,8 +15,11 @@ use uuid::Uuid;
 use self::{
     common::*,
     error::PacketError,
-    types::{Difficulty, Gamemode, LevelType},
-    version_specific::{types::{v47::Dimension, v754::{DimensionCodec, DimensionType}}},
+    types::{Difficulty, Gamemode, LevelType, Recipe},
+    version_specific::types::{
+        v47::Dimension,
+        v754::{DimensionCodec, DimensionType},
+    },
 };
 use crate::serde::{de::Deserializer, varint::VarInt};
 
@@ -98,6 +101,8 @@ pub enum PacketKind {
         /// True if the world is a superflat world; flat worlds have different void fog and a horizon at y=0 instead of y=63
         is_flat: bool,
     },
+    /// The DeclareRecipes packet.
+    DeclareRecipes(Vec<Recipe>),
     /// The [HeldItemChange](https://wiki.vg/Protocol#Held_Item_Change_.28clientbound.29) packet.
     HeldItemChange(i8),
 }
@@ -150,7 +155,7 @@ impl PacketKind {
                     ))
                 }
             }
-            StatusRequest => Ok(Box::new(common::status::serverbound::Request::new())),
+            StatusRequest => Ok(Box::new(common::status::serverbound::Request)),
             StatusResponse(json_response) => Ok(Box::new(
                 match common::status::clientbound::Response::new(json_response) {
                     Ok(s) => s,
@@ -262,6 +267,29 @@ impl PacketKind {
                     ))
                 }
             },
+            DeclareRecipes(recipes) => match protocol_version {
+                348..=350 => Ok(Box::new(
+                    version_specific::play::v348::clientbound::DeclareRecipes {
+                        recipes: recipes.into(),
+                    },
+                )),
+                351..=401 => Ok(Box::new(
+                    version_specific::play::v351::clientbound::DeclareRecipes {
+                        recipes: recipes.into(),
+                    },
+                )),
+                402..=452 => Ok(Box::new(
+                    version_specific::play::v402::clientbound::DeclareRecipes {
+                        recipes: recipes.into(),
+                    },
+                )),
+                453..=754 => Ok(Box::new(
+                    version_specific::play::v453::clientbound::DeclareRecipes {
+                        recipes: recipes.into(),
+                    },
+                )),
+                _ => unreachable!("This packet should not be send prior to protocol version 348."),
+            },
             HeldItemChange(slot) => Ok(Box::new(common::play::clientbound::HeldItemChange::new(slot))),
         }
     }
@@ -300,7 +328,9 @@ impl PacketKind {
                     }
                     i => return Err(PacketError::InvalidPacketId(i, state)),
                 },
-                State::Play => todo!(),
+                State::Play => match id {
+                    _ => unimplemented!(),
+                },
                 State::Status => match id {
                     i if i == status::serverbound::Request::id(protocol_version) => {
                         Ok(PacketKind::StatusRequest)
@@ -337,6 +367,7 @@ impl Display for PacketKind {
             StatusPing(_) => write!(f, "StatusPing"),
             StatusPong(_) => write!(f, "StatusPong"),
             JoinGame { .. } => write!(f, "JoinGame"),
+            DeclareRecipes(_) => write!(f, "DeclareRecipes"),
             HeldItemChange(_) => write!(f, "HeldItemChange"),
         }
     }

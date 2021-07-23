@@ -88,13 +88,8 @@ impl Client {
     pub(crate) async fn recv(&mut self) {
         loop {
             match self.framed.try_next().await {
-                Ok(Some(p)) => match p {
-                    PacketKind::Handshake {
-                        protocol_version: _,
-                        host: _,
-                        port: _,
-                        next_state: _,
-                    }
+                Ok(Some(
+                    PacketKind::Handshake { .. }
                     | PacketKind::LoginStart(_)
                     | PacketKind::LoginSuccess(_, _)
                     | PacketKind::StatusRequest
@@ -103,10 +98,16 @@ impl Client {
                     | PacketKind::StatusPong(_)
                     | PacketKind::JoinGame { .. }
                     | PacketKind::HeldItemChange(_) => {
-                        error!("Received packet from other protocol state: {}.", p);
+                        error!("Received packet from other protocol state.");
                         return;
                     }
-                },
+                )) => {
+                    error!("Received packet from other protocol state.");
+                    return;
+                }
+                Ok(Some(PacketKind::DeclareRecipes(_))) => {
+                    error!("Received client side packet.");
+                }
                 Ok(None) => return,
                 Err(e) => {
                     error!("Failed reading next packet: {}", e.0);
@@ -321,6 +322,12 @@ impl Client {
             is_flat: false,
         };
         send_packet!(self packet);
+
+        if self.get_protocol_version() >= 348 {
+            let packet = PacketKind::DeclareRecipes(vec![]);
+
+            send_packet!(self packet);
+        }
     }
 
     /// set the players slot to `slot`
