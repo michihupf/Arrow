@@ -2,7 +2,10 @@
 pub mod clientbound {
     use serde::{Deserialize, Serialize};
 
-    use crate::{packets::{Packet, error::PacketError}, serde::ser::Serializer};
+    use crate::{
+        packets::{error::PacketError, Packet},
+        serde::ser::Serializer,
+    };
 
     /// The [HeldItemChange](https://wiki.vg/Protocol#Held_Item_Change_.28clientbound.29) packet.
     #[derive(Serialize, Deserialize)]
@@ -19,7 +22,6 @@ pub mod clientbound {
     }
 
     impl Packet for HeldItemChange {
-
         fn id(version: i32) -> i32 {
             if version >= 721 || (471..550).contains(&version) {
                 0x3F
@@ -54,5 +56,4 @@ pub mod clientbound {
             Self::id(protocol_version)
         }
     }
-
 }

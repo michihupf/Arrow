@@ -24,7 +24,12 @@ impl Server {
         let player_clone = player.clone();
         tokio::spawn(async move {
             player_clone.write().await.client_mut().join().await;
-            player_clone.write().await.client_mut().set_slot(0 as i8).await;
+            player_clone
+                .write()
+                .await
+                .client_mut()
+                .set_slot(0 as i8)
+                .await;
         });
         self.players.push(player);
     }

@@ -97,10 +97,7 @@ impl Client {
                     | PacketKind::StatusPing(_)
                     | PacketKind::StatusPong(_)
                     | PacketKind::JoinGame { .. }
-                    | PacketKind::HeldItemChange(_) => {
-                        error!("Received packet from other protocol state.");
-                        return;
-                    }
+                    | PacketKind::HeldItemChange(_),
                 )) => {
                     error!("Received packet from other protocol state.");
                     return;

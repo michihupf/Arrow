@@ -266,7 +266,7 @@ impl PacketKind {
                         ),
                     ))
                 }
-            },
+            }
             DeclareRecipes(recipes) => match protocol_version {
                 348..=350 => Ok(Box::new(
                     version_specific::play::v348::clientbound::DeclareRecipes {
@@ -290,7 +290,9 @@ impl PacketKind {
                 )),
                 _ => unreachable!("This packet should not be send prior to protocol version 348."),
             },
-            HeldItemChange(slot) => Ok(Box::new(common::play::clientbound::HeldItemChange::new(slot))),
+            HeldItemChange(slot) => Ok(Box::new(common::play::clientbound::HeldItemChange::new(
+                slot,
+            ))),
         }
     }
 

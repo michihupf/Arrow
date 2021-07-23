@@ -2,7 +2,7 @@
 pub mod handshake;
 /// The packets of the login state.
 pub mod login;
-/// status packet implementations
-pub mod status;
 /// All common `play` packets
 pub mod play;
+/// status packet implementations
+pub mod status;
