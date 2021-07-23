@@ -60,18 +60,18 @@ pub enum LevelType {
 }
 
 /// A crafting recipe.
-pub struct Recipe<'a> {
+pub struct Recipe {
     /// The recipe id.
     pub(crate) id: String,
     /// The type of the recipe.
     pub(crate) ty: String,
     /// The data for the recipe.
-    pub(crate) data: Option<RecipeData<'a>>,
+    pub(crate) data: Option<RecipeData>,
 }
 
-impl<'a> Recipe<'a> {
+impl Recipe {
     /// Create a new recipe.
-    pub fn new(id: String, ty: String, data: Option<RecipeData<'a>>) -> Self {
+    pub fn new(id: String, ty: String, data: Option<RecipeData>) -> Self {
         Self { id, ty, data }
     }
 
@@ -86,25 +86,25 @@ impl<'a> Recipe<'a> {
     }
 
     /// Get a mutable reference to the recipe's data.
-    pub fn data(&self) -> &Option<RecipeData<'a>> {
+    pub fn data(&self) -> &Option<RecipeData> {
         &self.data
     }
 }
 
 /// The recipe data.
 #[allow(missing_docs)]
-pub enum RecipeData<'a> {
+pub enum RecipeData {
     CraftingShapeless {
         group: String,
-        ingridients: Vec<Ingridient<'a>>,
-        result: Slot<'a>,
+        ingridients: Vec<Ingridient>,
+        result: Slot,
     },
     CraftingShaped {
         width: i32,
         height: i32,
         group: String,
-        ingridients: Vec<Ingridient<'a>>,
-        result: Slot<'a>,
+        ingridients: Vec<Ingridient>,
+        result: Slot,
     },
     CraftingSpecialArmorDye,
     CraftingSpecialBookCloning,
@@ -122,33 +122,33 @@ pub enum RecipeData<'a> {
 }
 
 /// A crafting ingridient.
-pub struct Ingridient<'a> {
-    pub(crate) items: Vec<Slot<'a>>,
+pub struct Ingridient {
+    pub(crate) items: Vec<Slot>,
 }
 
-impl<'a> Ingridient<'a> {
+impl Ingridient {
     /// Create a new [`Ingridient`].
-    pub fn new(items: Vec<Slot<'a>>) -> Self {
+    pub fn new(items: Vec<Slot>) -> Self {
         Self { items }
     }
 
     /// Get a mutable reference to the ingridient's items.
-    pub fn items(&self) -> &Vec<Slot<'a>> {
+    pub fn items(&self) -> &Vec<Slot> {
         &self.items
     }
 }
 
 /// A slot.
-pub struct Slot<'a> {
-    pub(crate) data: Option<SlotData<'a>>,
+pub struct Slot {
+    pub(crate) data: Option<SlotData>,
 }
 
 /// The data for a slot.
-pub struct SlotData<'a> {
+pub struct SlotData {
     pub(crate) id: i16,
     pub(crate) count: u8,
     pub(crate) damage: i16,
-    pub(crate) nbt: Nbt<'a, Blob>,
+    pub(crate) nbt: Blob,
 }
 
 /// A struct to serialize and deserialize NBT data.

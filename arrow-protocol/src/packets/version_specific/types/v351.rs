@@ -182,14 +182,14 @@ impl<'a, 'de: 'a> Visitor<'de> for SlotVisitor<'a> {
     }
 }
 
-impl<'a, 'b: 'a> From<crate::packets::types::Recipe<'b>> for Recipe<'a> {
-    fn from(r: crate::packets::types::Recipe<'b>) -> Self {
+impl<'a> From<crate::packets::types::Recipe> for Recipe<'a> {
+    fn from(r: crate::packets::types::Recipe) -> Self {
         Self::new(r.id, r.ty, r.data.map(|v| v.into()))
     }
 }
 
-impl<'a, 'b: 'a> From<crate::packets::types::RecipeData<'b>> for RecipeData<'a> {
-    fn from(r: crate::packets::types::RecipeData<'b>) -> Self {
+impl<'a> From<crate::packets::types::RecipeData> for RecipeData<'a> {
+    fn from(r: crate::packets::types::RecipeData) -> Self {
         use crate::packets::types::RecipeData::*;
 
         match r {
@@ -232,20 +232,20 @@ impl<'a, 'b: 'a> From<crate::packets::types::RecipeData<'b>> for RecipeData<'a> 
     }
 }
 
-impl<'a, 'b: 'a> From<crate::packets::types::Ingridient<'b>> for Ingridient<'a> {
-    fn from(i: crate::packets::types::Ingridient<'b>) -> Self {
+impl<'a> From<crate::packets::types::Ingridient> for Ingridient<'a> {
+    fn from(i: crate::packets::types::Ingridient) -> Self {
         Self::new(i.items.into())
     }
 }
 
-impl<'a, 'b> From<crate::packets::types::Slot<'a>> for Slot<'a> {
-    fn from(s: crate::packets::types::Slot<'a>) -> Self {
+impl<'a> From<crate::packets::types::Slot> for Slot<'a> {
+    fn from(s: crate::packets::types::Slot) -> Self {
         if s.data.is_none() {
             Self::new(-1, None);
         }
 
         let data = s.data.unwrap();
 
-        Self::new(data.id, Some(SlotData::new(data.count, data.nbt)))
+        Self::new(data.id, Some(SlotData::new(data.count, Nbt::new(data.nbt))))
     }
 }

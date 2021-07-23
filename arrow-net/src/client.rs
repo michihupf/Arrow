@@ -88,7 +88,7 @@ impl Client {
     pub(crate) async fn recv(&mut self) {
         loop {
             match self.framed.try_next().await {
-                Ok(Some(p)) => match p {
+                Ok(Some(
                     PacketKind::Handshake {
                         protocol_version: _,
                         host: _,
@@ -120,11 +120,14 @@ impl Client {
                         enable_respawn_screen: _,
                         is_debug: _,
                         is_flat: _,
-                    } => {
-                        error!("Received packet from other protocol state: {}.", p);
-                        return;
-                    }
-                },
+                    },
+                )) => {
+                    error!("Received packet from other protocol state.");
+                    return;
+                }
+                Ok(Some(PacketKind::DeclareRecipes(_))) => {
+                    error!("Received client side packet.");
+                }
                 Ok(None) => return,
                 Err(e) => {
                     error!("Failed reading next packet: {}", e.0);
@@ -340,6 +343,12 @@ impl Client {
         };
 
         send_packet!(self packet);
+
+        if self.get_protocol_version() >= 348 {
+            let packet = PacketKind::DeclareRecipes(vec![]);
+
+            send_packet!(self packet);
+        }
     }
 
     async fn next_packet(&mut self) -> Result<PacketKind, NetError> {

@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{packets::types::LengthPrefixedVec, serde::varint::VarInt};
+use crate::{
+    packets::types::{LengthPrefixedVec, Nbt},
+    serde::varint::VarInt,
+};
 
 use super::v47::{Slot, SlotData};
 
@@ -92,14 +95,14 @@ impl<'a> Ingridient<'a> {
     }
 }
 
-impl<'a, 'b: 'a> From<crate::packets::types::Recipe<'b>> for Recipe<'a> {
-    fn from(r: crate::packets::types::Recipe<'b>) -> Self {
+impl<'a> From<crate::packets::types::Recipe> for Recipe<'a> {
+    fn from(r: crate::packets::types::Recipe) -> Self {
         Self::new(r.id, r.ty, r.data.map(|v| v.into()))
     }
 }
 
-impl<'a, 'b: 'a> From<crate::packets::types::RecipeData<'b>> for RecipeData<'a> {
-    fn from(r: crate::packets::types::RecipeData<'b>) -> Self {
+impl<'a, 'b: 'a> From<crate::packets::types::RecipeData> for RecipeData<'a> {
+    fn from(r: crate::packets::types::RecipeData) -> Self {
         use crate::packets::types::RecipeData::*;
 
         match r {
@@ -142,14 +145,14 @@ impl<'a, 'b: 'a> From<crate::packets::types::RecipeData<'b>> for RecipeData<'a> 
     }
 }
 
-impl<'a, 'b: 'a> From<crate::packets::types::Ingridient<'b>> for Ingridient<'a> {
-    fn from(i: crate::packets::types::Ingridient<'b>) -> Self {
+impl<'a> From<crate::packets::types::Ingridient> for Ingridient<'a> {
+    fn from(i: crate::packets::types::Ingridient) -> Self {
         Self::new(i.items.into())
     }
 }
 
-impl<'a, 'b> From<crate::packets::types::Slot<'a>> for Slot<'a> {
-    fn from(s: crate::packets::types::Slot<'a>) -> Self {
+impl<'a> From<crate::packets::types::Slot> for Slot<'a> {
+    fn from(s: crate::packets::types::Slot) -> Self {
         if s.data.is_none() {
             Self::new(-1, None);
         }
@@ -158,7 +161,7 @@ impl<'a, 'b> From<crate::packets::types::Slot<'a>> for Slot<'a> {
 
         Self::new(
             data.id,
-            Some(SlotData::new(data.count, data.damage, data.nbt)),
+            Some(SlotData::new(data.count, data.damage, Nbt::new(data.nbt))),
         )
     }
 }

@@ -38,7 +38,7 @@ pub trait Packet {
 }
 
 /// A multi-version representation for packets.
-pub enum PacketKind<'a> {
+pub enum PacketKind {
     /// The [Handshake](https://wiki.vg/Protocol#Handshake) packet.
     Handshake {
         /// The protocol version of the client.
@@ -102,7 +102,7 @@ pub enum PacketKind<'a> {
         is_flat: bool,
     },
     /// The DeclareRecipes packet.
-    DeclareRecipes(Vec<Recipe<'a>>),
+    DeclareRecipes(Vec<Recipe>),
 }
 
 #[derive(Debug, Clone)]
@@ -121,9 +121,9 @@ pub enum State {
     Status,
 }
 
-impl<'a> PacketKind<'a> {
+impl PacketKind {
     /// Gets a [`Packet`] using `self` and the protocol version.
-    pub fn into_packet(self, protocol_version: i32) -> Result<Box<dyn Packet + 'a>, PacketError> {
+    pub fn into_packet(self, protocol_version: i32) -> Result<Box<dyn Packet>, PacketError> {
         use PacketKind::*;
 
         match self {
@@ -325,7 +325,9 @@ impl<'a> PacketKind<'a> {
                     }
                     i => return Err(PacketError::InvalidPacketId(i, state)),
                 },
-                State::Play => todo!(),
+                State::Play => match id {
+                    _ => unimplemented!(),
+                },
                 State::Status => match id {
                     i if i == status::serverbound::Request::id(protocol_version) => {
                         Ok(PacketKind::StatusRequest)
@@ -344,7 +346,7 @@ impl<'a> PacketKind<'a> {
     }
 }
 
-impl<'a> Display for PacketKind<'a> {
+impl Display for PacketKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use PacketKind::*;
 

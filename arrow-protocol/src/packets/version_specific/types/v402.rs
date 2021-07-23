@@ -98,8 +98,8 @@ impl<'a, 'de: 'a> Visitor<'de> for SlotVisitor<'a> {
     }
 }
 
-impl<'a, 'b> From<crate::packets::types::Slot<'a>> for Slot<'a> {
-    fn from(s: crate::packets::types::Slot<'a>) -> Self {
+impl<'a> From<crate::packets::types::Slot> for Slot<'a> {
+    fn from(s: crate::packets::types::Slot) -> Self {
         if s.data.is_none() {
             Self::new(false, None);
         }
@@ -108,7 +108,11 @@ impl<'a, 'b> From<crate::packets::types::Slot<'a>> for Slot<'a> {
 
         Self::new(
             true,
-            Some(SlotData::new(VarInt(data.id as i32), data.count, data.nbt)),
+            Some(SlotData::new(
+                VarInt(data.id as i32),
+                data.count,
+                Nbt::new(data.nbt),
+            )),
         )
     }
 }

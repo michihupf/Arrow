@@ -92,14 +92,14 @@ impl<'a> Ingridient<'a> {
     }
 }
 
-impl<'a, 'b: 'a> From<crate::packets::types::Recipe<'b>> for Recipe<'a> {
-    fn from(r: crate::packets::types::Recipe<'b>) -> Self {
+impl<'a> From<crate::packets::types::Recipe> for Recipe<'a> {
+    fn from(r: crate::packets::types::Recipe) -> Self {
         Self::new(r.id, r.ty, r.data.map(|v| v.into()))
     }
 }
 
-impl<'a, 'b: 'a> From<crate::packets::types::RecipeData<'b>> for RecipeData<'a> {
-    fn from(r: crate::packets::types::RecipeData<'b>) -> Self {
+impl<'a> From<crate::packets::types::RecipeData> for RecipeData<'a> {
+    fn from(r: crate::packets::types::RecipeData) -> Self {
         use crate::packets::types::RecipeData::*;
 
         match r {
@@ -142,8 +142,8 @@ impl<'a, 'b: 'a> From<crate::packets::types::RecipeData<'b>> for RecipeData<'a> 
     }
 }
 
-impl<'a, 'b: 'a> From<crate::packets::types::Ingridient<'b>> for Ingridient<'a> {
-    fn from(i: crate::packets::types::Ingridient<'b>) -> Self {
+impl<'a> From<crate::packets::types::Ingridient> for Ingridient<'a> {
+    fn from(i: crate::packets::types::Ingridient) -> Self {
         Self::new(i.items.into())
     }
 }
