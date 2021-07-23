@@ -103,6 +103,8 @@ pub enum PacketKind {
     },
     /// The DeclareRecipes packet.
     DeclareRecipes(Vec<Recipe>),
+    /// The [HeldItemChange](https://wiki.vg/Protocol#Held_Item_Change_.28clientbound.29) packet.
+    HeldItemChange(i8),
 }
 
 #[derive(Debug, Clone)]
@@ -264,7 +266,7 @@ impl PacketKind {
                         ),
                     ))
                 }
-            }
+            },
             DeclareRecipes(recipes) => match protocol_version {
                 348..=350 => Ok(Box::new(
                     version_specific::play::v348::clientbound::DeclareRecipes {
@@ -288,6 +290,7 @@ impl PacketKind {
                 )),
                 _ => unreachable!("This packet should not be send prior to protocol version 348."),
             },
+            HeldItemChange(slot) => Ok(Box::new(common::play::clientbound::HeldItemChange::new(slot))),
         }
     }
 
@@ -365,6 +368,7 @@ impl Display for PacketKind {
             StatusPong(_) => write!(f, "StatusPong"),
             JoinGame { .. } => write!(f, "JoinGame"),
             DeclareRecipes(_) => write!(f, "DeclareRecipes"),
+            HeldItemChange(_) => write!(f, "HeldItemChange"),
         }
     }
 }
