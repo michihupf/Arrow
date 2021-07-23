@@ -69,13 +69,6 @@ pub mod serverbound {
     /// no fields
     pub struct Request;
 
-    impl Request {
-        /// creates a new [Request] packet
-        pub fn new() -> Self {
-            Self {}
-        }
-    }
-
     impl Packet for Request {
         fn id(_: i32) -> i32
         where

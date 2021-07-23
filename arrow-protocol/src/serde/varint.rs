@@ -159,7 +159,7 @@ where
 
     while {
         let buf = &mut [0];
-        reader.read(buf).unwrap();
+        reader.read_exact(buf).unwrap();
         read = buf[0];
 
         let value = (read & 0b01111111) as u32;
@@ -248,7 +248,7 @@ where
     let mut read: u8;
     while {
         let buf = &mut [0];
-        reader.read(buf).unwrap();
+        reader.read_exact(buf).unwrap();
         read = buf[0];
 
         let value = (read & 0b01111111) as u64;

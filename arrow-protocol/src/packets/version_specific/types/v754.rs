@@ -1,4 +1,3 @@
-use nbt::to_writer;
 use serde::{Deserialize, Serialize};
 
 ///

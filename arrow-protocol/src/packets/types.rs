@@ -3,7 +3,7 @@ use std::{
     marker::PhantomData,
 };
 
-use nbt::{de::Decoder, to_writer};
+use nbt::{de::Decoder, to_writer, Blob};
 use serde::{
     de::{SeqAccess, Visitor},
     ser::SerializeSeq,
@@ -57,6 +57,98 @@ pub enum LevelType {
     Buffet,
     /// default_1_1 world
     Default11,
+}
+
+/// A crafting recipe.
+pub struct Recipe<'a> {
+    /// The recipe id.
+    pub(crate) id: String,
+    /// The type of the recipe.
+    pub(crate) ty: String,
+    /// The data for the recipe.
+    pub(crate) data: Option<RecipeData<'a>>,
+}
+
+impl<'a> Recipe<'a> {
+    /// Create a new recipe.
+    pub fn new(id: String, ty: String, data: Option<RecipeData<'a>>) -> Self {
+        Self { id, ty, data }
+    }
+
+    /// Get a reference to the recipe's id.
+    pub fn id(&self) -> &str {
+        self.id.as_str()
+    }
+
+    /// Get a reference to the recipe's ty.
+    pub fn ty(&self) -> &str {
+        self.ty.as_str()
+    }
+
+    /// Get a mutable reference to the recipe's data.
+    pub fn data(&self) -> &Option<RecipeData<'a>> {
+        &self.data
+    }
+}
+
+/// The recipe data.
+#[allow(missing_docs)]
+pub enum RecipeData<'a> {
+    CraftingShapeless {
+        group: String,
+        ingridients: Vec<Ingridient<'a>>,
+        result: Slot<'a>,
+    },
+    CraftingShaped {
+        width: i32,
+        height: i32,
+        group: String,
+        ingridients: Vec<Ingridient<'a>>,
+        result: Slot<'a>,
+    },
+    CraftingSpecialArmorDye,
+    CraftingSpecialBookCloning,
+    CraftingSpecialMapCloning,
+    CraftingSpecialMapExtending,
+    CraftingSpecialFireworkRocket,
+    CraftingSpecialFireworkStar,
+    CraftingSpecialFireworkStarFade,
+    CraftingSpecialRepairItem,
+    CraftingSpecialTippedArrow,
+    CraftingSpecialBannerDuplicate,
+    CraftingSpecialBannerAddPattern,
+    CraftingSpecialShieldDecoration,
+    CraftingSpecialShulkerBoxColoring,
+}
+
+/// A crafting ingridient.
+pub struct Ingridient<'a> {
+    pub(crate) items: Vec<Slot<'a>>,
+}
+
+impl<'a> Ingridient<'a> {
+    /// Create a new [`Ingridient`].
+    pub fn new(items: Vec<Slot<'a>>) -> Self {
+        Self { items }
+    }
+
+    /// Get a mutable reference to the ingridient's items.
+    pub fn items(&self) -> &Vec<Slot<'a>> {
+        &self.items
+    }
+}
+
+/// A slot.
+pub struct Slot<'a> {
+    pub(crate) data: Option<SlotData<'a>>,
+}
+
+/// The data for a slot.
+pub struct SlotData<'a> {
+    pub(crate) id: i16,
+    pub(crate) count: u8,
+    pub(crate) damage: i16,
+    pub(crate) nbt: Nbt<'a, Blob>,
 }
 
 /// A struct to serialize and deserialize NBT data.
@@ -126,6 +218,14 @@ impl<'a, 'de: 'a, T: Serialize + Deserialize<'de>> Visitor<'de> for NbtVisitor<'
         let value = T::deserialize(&mut decoder).unwrap();
 
         Ok(Nbt(PhantomData, value))
+    }
+}
+
+impl<'a, 'de: 'a, T: Into<R>, R: Serialize + Deserialize<'de>> From<Vec<T>>
+    for LengthPrefixedVec<'a, R>
+{
+    fn from(v: Vec<T>) -> Self {
+        Self::new(v.into_iter().map(|v| v.into()).collect())
     }
 }
 
