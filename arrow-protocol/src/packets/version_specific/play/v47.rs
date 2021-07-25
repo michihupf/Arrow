@@ -8,7 +8,7 @@ pub mod clientbound {
         serde::ser::Serializer,
     };
 
-    /// The [JoinGame](https://wiki.vg/index.php?title=Pre-release_protocol&oldid=14639#Join_Game) packet for version 468 or higher.
+    /// The [JoinGame](https://wiki.vg/index.php?title=Protocol&oldid=7368#Join_Game) packet for version 47 or higher.
     #[derive(Serialize, Deserialize)]
     pub struct JoinGame {
         /// This is the player's Entity ID (EID).
@@ -62,6 +62,49 @@ pub mod clientbound {
             } else {
                 0x01
             }
+        }
+
+        fn data_bytes(&self) -> Result<Vec<u8>, PacketError> {
+            let mut ser = Serializer::new();
+
+            self.serialize(&mut ser)?;
+
+            Ok(ser.get_bytes())
+        }
+
+        fn self_id(&self, protocol_version: i32) -> i32 {
+            Self::id(protocol_version)
+        }
+    }
+
+    /// The [ServerDifficulty](https://wiki.vg/Protocol#Server_Difficulty) packet for version 47 and above
+    #[derive(Serialize, Deserialize)]
+    pub struct ServerDifficulty {
+        /// this is an unsigned byte enum
+        /// 0: peaceful, 1: easy, 2: normal, 3: hard
+        pub difficulty: u8,
+    }
+
+    impl ServerDifficulty {
+        /// create a new [ServerDifficulty] packet
+        pub fn new(difficulty: u8) -> Self {
+            Self { difficulty }
+        }
+    }
+
+    impl Packet for ServerDifficulty {
+        fn id(protocol_version: i32) -> i32
+        where
+            Self: Sized,
+        {
+            if protocol_version < 67 {
+                return 0x41;
+            } else if protocol_version < 318 {
+                return 0x0D;
+            } else if protocol_version < 332 {
+                return 0x0E;
+            }
+            0x0D
         }
 
         fn data_bytes(&self) -> Result<Vec<u8>, PacketError> {

@@ -1,4 +1,4 @@
-/// All `play` packets for protocol versions 108 and above.
+/// All `play` packets for protocol version 108 and above.
 pub mod v108;
 /// All `play` packets for protocol versions 348 and above.
 pub mod v348;
@@ -10,11 +10,11 @@ pub mod v402;
 pub mod v453;
 /// All `play` packets for protocol versions 464 and above.
 pub mod v464;
-/// All `play` packets for protocol versions 468 and above.
+/// All `play` packets for protocol version 468 and above.
 pub mod v468;
-/// All `play` packets for protocol versions 47 and above.
+/// All `play` packets for protocol version 47 and above.
 pub mod v47;
-/// All `play` packets for protocol versions 552 and above.
+/// All `play` packets for protocol version 552 and above.
 pub mod v552;
-/// All `play` packets for protocol versions 754 and above.
+/// All `play` packets for protocol version 754 and above.
 pub mod v754;

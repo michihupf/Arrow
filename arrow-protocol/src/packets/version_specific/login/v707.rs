@@ -1,4 +1,4 @@
-/// All clientbound `login` packets for protocol versions 707 and above.
+/// All clientbound `login` packets for protocol version 707 and above.
 pub mod clientbound {
     use serde::{Deserialize, Serialize};
     use uuid::Uuid;
@@ -9,7 +9,7 @@ pub mod clientbound {
     };
 
     /// The [Login Success](https://wiki.vg/Protocol#Login_Success) packet for protocol
-    /// versions 707 and above.
+    /// version 707 and above.
     ///
     /// # Fields
     /// `uuid` is the uuid the server gave the client.

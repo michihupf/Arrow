@@ -105,6 +105,8 @@ pub enum PacketKind {
     DeclareRecipes(Vec<Recipe>),
     /// The [HeldItemChange](https://wiki.vg/Protocol#Held_Item_Change_.28clientbound.29) packet.
     HeldItemChange(i8),
+    /// The [ServerDifficulty](https://wiki.vg/Protocol#Server_Difficulty) packet.
+    ServerDifficulty(Difficulty, bool),
 }
 
 #[derive(Debug, Clone)]
@@ -293,6 +295,22 @@ impl PacketKind {
             HeldItemChange(slot) => Ok(Box::new(common::play::clientbound::HeldItemChange::new(
                 slot,
             ))),
+            ServerDifficulty(difficulty, difficulty_locked) => {
+                if protocol_version >= 464 {
+                    Ok(Box::new(
+                        version_specific::play::v464::clientbound::ServerDifficulty::new(
+                            difficulty as u8,
+                            difficulty_locked,
+                        ),
+                    ))
+                } else {
+                    Ok(Box::new(
+                        version_specific::play::v47::clientbound::ServerDifficulty::new(
+                            difficulty as u8,
+                        ),
+                    ))
+                }
+            }
         }
     }
 
@@ -371,6 +389,7 @@ impl Display for PacketKind {
             JoinGame { .. } => write!(f, "JoinGame"),
             DeclareRecipes(_) => write!(f, "DeclareRecipes"),
             HeldItemChange(_) => write!(f, "HeldItemChange"),
+            ServerDifficulty(..) => write!(f, "ServerDifficulty"),
         }
     }
 }

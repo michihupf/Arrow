@@ -8,7 +8,7 @@ pub mod clientbound {
         serde::ser::Serializer,
     };
 
-    /// The [JoinGame](https://wiki.vg/index.php?title=Pre-release_protocol&oldid=14639#Join_Game) packet for version 468 or higher.
+    /// The [JoinGame](https://wiki.vg/index.php?title=Pre-release_protocol&oldid=7552#Join_Game) packet for version 108 or higher.
     #[derive(Serialize, Deserialize)]
     pub struct JoinGame {
         /// This is the player's Entity ID (EID).

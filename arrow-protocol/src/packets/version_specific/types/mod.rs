@@ -1,4 +1,4 @@
-/// Types for version 351 and above.
+/// Types for version 348 and above.
 pub mod v348;
 /// Types for version 351 and above.
 pub mod v351;
@@ -8,5 +8,5 @@ pub mod v402;
 pub mod v453;
 /// Types for versiom 47 and above.
 pub mod v47;
-/// Types for version 754 and above.
+/// Types for version 754 and above
 pub mod v754;
